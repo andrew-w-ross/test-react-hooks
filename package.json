@@ -16,27 +16,33 @@
     "react-dom": "^16.8.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.2.3",
     "@babel/core": "^7.2.2",
-    "@babel/preset-env": "^7.3.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.2.0",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.1.0",
     "@types/jest": "^24.0.0",
+    "@types/node": "^10.12.21",
     "@types/react": "^16.8.1",
     "@types/react-dom": "^16.0.11",
     "jest": "^24.1.0",
     "prettier": "^1.16.4",
-    "rollup": "^1.1.2",
-    "rollup-plugin-typescript2": "^0.19.2",
     "typescript": "^3.3.1"
   },
   "scripts": {
     "test": "jest",
     "fix": "prettier --write src/**/*.{ts,tsx}",
     "check": "prettier --check src/**/*.{ts,tsx}",
-    "build": "rollup -c",
+    "clean": "rm -rf dist",
+    "build:tsc": "tsc -p tsconfig.build.json",
+    "build:babel": "babel src --out-dir dist --extensions '.ts,.tsx' --ignore '**/__tests__'",
+    "build": "yarn clean && yarn build:tsc && yarn build:babel",
     "prepare": "yarn check && yarn build"
   },
   "jest": {
-    "clearMocks": true
+    "clearMocks": true,
+    "roots": [
+      "<rootDir>/src/"
+    ]
   }
 }

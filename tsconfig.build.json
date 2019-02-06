@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true
+    // "target": "es2016",
+    // "lib": ["esnext", "dom"]
+  },
+  "exclude": ["src/**/__tests__"]
+}
