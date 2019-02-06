@@ -27,7 +27,6 @@ jobs:
       - run: yarn test
 
   deploy:
-    <<: *defaults
     steps:
       - attach_workspace:
           at: ~/repo
