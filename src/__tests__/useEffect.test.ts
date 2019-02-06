@@ -37,7 +37,7 @@ it("will enter, leave and enter on unmount, mount", () => {
   expect(spyLeave).toHaveBeenCalledTimes(1);
 });
 
-it("will enter, leave and enter on update", async () => {
+it("will enter, leave and enter on update", () => {
   const { flushEffects } = useTestHook(() => useEffect(spy));
   expect(spy).toBeCalledTimes(1);
   expect(spyLeave).not.toHaveBeenCalled();
