@@ -7,14 +7,16 @@ const spy = jest.fn(() => spyLeave);
 afterEach(cleanUp);
 
 it("will fires enter on mount", () => {
-  useTestHook(() => useLayoutEffect(spy));
+  useTestHook(() => useLayoutEffect(spy), { mountEager: true });
 
   expect(spy).toBeCalledTimes(1);
   expect(spyLeave).not.toHaveBeenCalled();
 });
 
 it("will fire on leave on unmount", () => {
-  const { unmount } = useTestHook(() => useLayoutEffect(spy));
+  const { unmount } = useTestHook(() => useLayoutEffect(spy), {
+    mountEager: true
+  });
   expect(spy).toBeCalledTimes(1);
   expect(spyLeave).not.toHaveBeenCalled();
 
@@ -24,7 +26,9 @@ it("will fire on leave on unmount", () => {
 });
 
 it("will enter, leave and enter on unmount, remount", () => {
-  const { unmount, mount } = useTestHook(() => useLayoutEffect(spy));
+  const { unmount, mount } = useTestHook(() => useLayoutEffect(spy), {
+    mountEager: true
+  });
   expect(spy).toBeCalledTimes(1);
   expect(spyLeave).not.toHaveBeenCalled();
 
@@ -38,7 +42,9 @@ it("will enter, leave and enter on unmount, remount", () => {
 });
 
 it("will enter, leave and enter on update", () => {
-  const { flushEffects } = useTestHook(() => useLayoutEffect(spy));
+  const { flushEffects } = useTestHook(() => useLayoutEffect(spy), {
+    mountEager: true
+  });
   expect(spy).toBeCalledTimes(1);
   expect(spyLeave).not.toHaveBeenCalled();
 

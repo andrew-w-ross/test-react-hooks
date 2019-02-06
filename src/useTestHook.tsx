@@ -78,6 +78,13 @@ export type HookState<TRes, TConVal> = {
    * Sets the value of the context
    */
   setContextVal: (value: TConVal) => void;
+
+  /**
+   * Element that the test component is mounted on, use with caution
+   *
+   * @type {HTMLElement}
+   */
+  container: HTMLElement;
 };
 
 export type UpdateFn<TRes> = (res: TRes) => any;
@@ -97,14 +104,12 @@ export function useTestHook<TRes, TConVal = unknown>(
   options: TestHookOptions<TConVal> = {}
 ): HookState<TRes, TConVal> {
   let { contextVal } = options;
-  const { context: TestContext = DefaultContext, mountEager = true } = options;
+  const { context: TestContext = DefaultContext, mountEager = false } = options;
 
   let res: TRes;
-  let hasRendered = false;
   let val = 0;
 
   const testCallBack = () => {
-    hasRendered = true;
     res = setupFn();
   };
 
@@ -120,7 +125,7 @@ export function useTestHook<TRes, TConVal = unknown>(
   const renderComp = (updateFn?: UpdateFn<TRes>) =>
     act(() => {
       if (updateFn) {
-        updateFn(res); //?
+        updateFn(res);
       }
       ReactDom.render(
         //@ts-ignore
@@ -155,6 +160,7 @@ export function useTestHook<TRes, TConVal = unknown>(
     setContextVal: (value: TConVal) => {
       contextVal = value;
       renderComp();
-    }
+    },
+    container: container!
   };
 }
