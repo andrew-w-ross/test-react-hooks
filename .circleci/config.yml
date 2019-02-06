@@ -27,6 +27,8 @@ jobs:
       - run: yarn test
 
   deploy:
+    docker:
+      - image: circleci/node:8
     steps:
       - attach_workspace:
           at: ~/repo
