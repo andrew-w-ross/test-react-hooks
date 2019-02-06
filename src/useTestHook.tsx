@@ -61,7 +61,7 @@ export type HookState<TRes, TConVal> = {
   /**
    * Gets the current result of the hook
    */
-  getResult: () => TRes;
+  getResult: (updateFn?: UpdateFn<TRes>) => TRes;
   /**
    * Unmounts the component the hook is in
    */
@@ -79,6 +79,8 @@ export type HookState<TRes, TConVal> = {
    */
   setContextVal: (value: TConVal) => void;
 };
+
+export type UpdateFn<TRes> = (res: TRes) => any;
 
 /**
  * Entry point for the test-react-hooks library.
@@ -115,9 +117,12 @@ export function useTestHook<TRes, TConVal = unknown>(
     );
   };
 
-  const renderComp = () =>
+  const renderComp = (updateFn?: UpdateFn<TRes>) =>
     act(() => {
-      return ReactDom.render(
+      if (updateFn) {
+        updateFn(res); //?
+      }
+      ReactDom.render(
         //@ts-ignore
         <TestContext.Provider value={contextVal}>
           <TestComp val={val} callBack={testCallBack} />
@@ -130,8 +135,8 @@ export function useTestHook<TRes, TConVal = unknown>(
   if (mountEager) renderComp();
 
   return {
-    getResult: () => {
-      if (!hasRendered) renderComp();
+    getResult: (updateFn?: UpdateFn<TRes>) => {
+      renderComp(updateFn);
       return res;
     },
     unmount: () => {

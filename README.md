@@ -28,12 +28,11 @@ it("will count", () => {
   //Setup your hook
   const { getResult } = useTestHook(() => counterHook());
   //And get the current result
-  let [count, incFn] = getResult();
+  let [count] = getResult();
   expect(count).toBe(0);
-  incFn();
 
   //Then get the new results
-  [count, incFn] = getResult();
+  [count] = getResult(([, incFn]) => incFn());
   expect(count).toBe(1);
 });
 ```

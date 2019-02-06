@@ -18,48 +18,30 @@ it("can read useState", () => {
 
 it("can update useState", () => {
   const { getResult } = useTestHook(() => useState(2));
-  let [count, setCount] = getResult();
+  let [count] = getResult();
   expect(count).toBe(2);
-  setCount(3);
 
-  [count, setCount] = getResult();
+  [count] = getResult(([, setCount]) => setCount(3));
   expect(count).toBe(3);
 });
 
 it("will not remove state on flushEffects", () => {
-  const { getResult, flushEffects } = useTestHook(customHook);
+  const { getResult, flushEffects } = useTestHook(customHook, {
+    mountEager: false
+  });
 
-  let [count, setCount] = getResult();
+  let [count] = getResult();
   expect(count).toBe(0);
   expect(spy).toHaveBeenCalledTimes(1);
   expect(leaveSpy).not.toHaveBeenCalled();
-  setCount(1);
 
-  [count, setCount] = getResult();
+  [count] = getResult(([, setCount]) => setCount(1));
   expect(count).toBe(1);
-  expect(spy).toHaveBeenCalledTimes(1);
-  expect(leaveSpy).not.toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledTimes(2);
+  expect(leaveSpy).toHaveBeenCalled();
 
   flushEffects();
-  [count, setCount] = getResult();
   expect(count).toBe(1);
-  expect(spy).toHaveBeenCalledTimes(3);
-  expect(leaveSpy).toHaveBeenCalledTimes(2);
-});
-
-it("will flush all state changes", () => {
-  const { getResult } = useTestHook(customHook);
-
-  let [count, setCount] = getResult();
-  expect(count).toBe(0);
-  expect(spy).toHaveBeenCalledTimes(1);
-  expect(leaveSpy).not.toHaveBeenCalled();
-
-  setCount(1);
-  expect(leaveSpy).not.toHaveBeenCalled();
-
-  setCount(2);
-  setCount(3);
   expect(spy).toHaveBeenCalledTimes(3);
   expect(leaveSpy).toHaveBeenCalledTimes(2);
 });
