@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "outDir": "dist",
+    "declaration": true,
+    "strict": true,
+    "jsx": "react",
+    "sourceMap": true,
+    "lib": ["esnext", "dom"],
+    "types": ["jest", "node"],
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
