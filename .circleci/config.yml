@@ -25,6 +25,7 @@ jobs:
 
       # run tests!
       - run: yarn test
+      - run: yarn build
 
   deploy:
     docker:
@@ -49,7 +50,7 @@ workflows:
               only: /^v.*/
       - deploy:
           requires:
-            - test
+            - build
           filters:
             tags:
               only: /^v.*/
