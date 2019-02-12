@@ -14,14 +14,19 @@ const counterHook = (inc = 1) => {
 it("will count", () => {
   //Setup your hook
   const { getResult } = useTestHook(() => counterHook());
-  //And get the current result
-  let [count] = getResult();
-  expect(count).toBe(0);
 
-  //This is the result after the change
-  [count] = getResult(
-    //changes can need to be passed run here
-    ([, incFn]) => incFn()
-  );
-  expect(count).toBe(1);
+  {
+    //And get the current result
+    const [count] = getResult();
+    expect(count).toBe(0);
+  }
+
+  {
+    //This is the result after the change
+    const [count] = getResult(
+      //changes can need to be passed run here
+      ([, incFn]) => incFn()
+    );
+    expect(count).toBe(1);
+  }
 });
