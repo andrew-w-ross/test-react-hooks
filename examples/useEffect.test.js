@@ -39,15 +39,19 @@ it("will subscribe get the new messages and unsubscribe", () => {
   //Setup your hook
   const { getResult, unmount } = useTestHook(() => lastMessageHook());
 
-  //Should see a subscribe
-  let message = getResult();
-  expect(message).toBe("");
-  expect(listeners.length).toBe(1);
+  {
+    //Should see a subscribe
+    const message = getResult();
+    expect(message).toBe("");
+    expect(listeners.length).toBe(1);
+  }
 
-  //Should see an unsubscribe and a subscribe
-  message = getResult(() => send("Foo"));
-  expect(message).toBe("Foo");
-  expect(listeners.length).toBe(1);
+  {
+    //Should see an unsubscribe and a subscribe
+    const message = getResult(() => send("Foo"));
+    expect(message).toBe("Foo");
+    expect(listeners.length).toBe(1);
+  }
 
   unmount();
   expect(listeners.length).toBe(0);

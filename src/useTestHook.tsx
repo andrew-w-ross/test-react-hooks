@@ -51,7 +51,7 @@ export type TestHookOptions<TConVal> = {
   contextVal?: TConVal;
 
   /**
-   * Should it mount straight away for when needed?
+   * Should it mount straight away or when needed?
    * @type {boolean}
    */
   mountEager?: boolean;

@@ -18,12 +18,16 @@ it("will get context value", () => {
     contextVal: "Bar" //Initial Value
   });
 
-  let value = getResult();
-  expect(value).toBe("Bar");
+  {
+    const value = getResult();
+    expect(value).toBe("Bar");
+  }
 
   //Change the context value
   setContextVal("Foo");
   //Fetch the state of the context
-  value = getResult();
-  expect(value).toBe("Foo");
+  {
+    const value = getResult();
+    expect(value).toBe("Foo");
+  }
 });
