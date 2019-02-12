@@ -2,6 +2,14 @@
 
 Simple testing for react hooks
 
+![](https://img.shields.io/david/andrew-w-ross/test-react-hooks.svg?style=flat)
+
+![](https://img.shields.io/npm/dt/test-react-hooks.svg?style=flat)
+
+![](https://img.shields.io/npm/v/test-react-hooks.svg?style=flat)
+
+![HitCount](http://hits.dwyl.com/andrew-w-ross/test-react-hooks.svg)
+
 ## Get Started
 
 To install either :
