@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
+    "target": "es2018",
     "noEmit": true,
     "outDir": "dist",
     "declaration": true,
     "strict": true,
     "jsx": "react",
+    "module": "commonjs",
     "sourceMap": true,
     "lib": ["esnext", "dom"],
     "types": ["jest", "node"],

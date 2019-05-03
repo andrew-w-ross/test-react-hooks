@@ -2,36 +2,9 @@ import React, { Context, createContext, FC } from "react";
 import ReactDom from "react-dom";
 //@ts-ignore
 import { act } from "react-dom/test-utils";
+import { getContainer } from "./utils";
 
 const DefaultContext = createContext<unknown>({});
-const TEST_ID = "__useTests_hook_component";
-
-let container: HTMLElement | null = null;
-
-/**
- * Function to be called after your tests to cleanup the container created
- *
- * @export
- */
-export function cleanUp() {
-  container = null;
-  const elem = document.getElementById(TEST_ID);
-  if (elem != null) {
-    elem.remove();
-  }
-}
-
-function ensureContainer() {
-  if (container != null) {
-    console.warn(
-      "Previous tests weren't cleaned up, use the cleanUp command after each test"
-    );
-    cleanUp();
-  }
-  container = document.createElement("div");
-  container.id = TEST_ID;
-  document.body.appendChild(container);
-}
 
 type TestCompProps = {
   callBack: () => unknown;
@@ -98,11 +71,13 @@ export type UpdateFn<TRes> = (res: TRes) => any;
  * @param {() => TRes} setupFn function that sets up your hook and returns its values
  * @param {TestHookOptions<TConVal>} [options={}]
  * @returns {HookState<TRes, TConVal>} object that then controls the current hook state
+ * @deprecated useProxy instead
  */
 export function useTestHook<TRes, TConVal = unknown>(
   setupFn: () => TRes,
   options: TestHookOptions<TConVal> = {}
 ): HookState<TRes, TConVal> {
+  console.warn("useTestHook is deprecated, useProxy instead");
   let { contextVal } = options;
   const { context: TestContext = DefaultContext, mountEager = false } = options;
 
@@ -122,6 +97,8 @@ export function useTestHook<TRes, TConVal = unknown>(
     );
   };
 
+  const container = getContainer();
+
   const renderComp = (updateFn?: UpdateFn<TRes>) =>
     act(() => {
       if (updateFn) {
@@ -136,7 +113,6 @@ export function useTestHook<TRes, TConVal = unknown>(
       );
     });
 
-  ensureContainer();
   if (mountEager) renderComp();
 
   return {
@@ -161,6 +137,7 @@ export function useTestHook<TRes, TConVal = unknown>(
       contextVal = value;
       renderComp();
     },
-    container: container!
+    //@ts-ignore
+    container
   };
 }

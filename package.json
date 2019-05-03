@@ -22,18 +22,26 @@
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.1.0",
     "@types/jest": "^24.0.0",
-    "@types/node": "^10.12.21",
+    "@types/node": "^11.13.8",
     "@types/react": "^16.8.1",
     "@types/react-dom": "^16.0.11",
+    "@typescript-eslint/eslint-plugin": "^1.5.0",
+    "@typescript-eslint/parser": "^1.5.0",
     "docts": "^0.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-plugin-prettier": "^3.0.1",
+    "eslint-plugin-react": "^7.12.4",
+    "eslint-plugin-react-hooks": "^1.4.0",
     "jest": "^24.1.0",
+    "majestic": "^1.4.1",
     "prettier": "^1.16.4",
     "typescript": "^3.3.1"
   },
   "scripts": {
     "test": "jest",
-    "fix": "prettier --write src/**/*.{ts,tsx}",
-    "check": "prettier --check src/**/*.{ts,tsx}",
+    "fix": "eslint src/**/*.{ts,tsx,js,jsx} --fix",
+    "check": "eslint src/**/*.{ts,tsx,js,jsx}",
     "clean": "rm -rf dist",
     "build:tsc": "tsc -p tsconfig.build.json",
     "build:babel": "babel src --out-dir dist --extensions '.ts,.tsx' --ignore '**/__tests__'",
@@ -44,6 +52,9 @@
     "clearMocks": true,
     "roots": [
       "<rootDir>/src/"
+    ],
+    "setupFilesAfterEnv": [
+      "./setup.js"
     ]
   },
   "keywords": [
