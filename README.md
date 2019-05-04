@@ -7,7 +7,7 @@ Simple testing for react hooks
 ![](https://img.shields.io/npm/v/test-react-hooks.svg?style=flat)
 [![Build Status](https://travis-ci.com/andrew-w-ross/test-react-hooks.svg?branch=master)](https://travis-ci.com/andrew-w-ross/test-react-hooks)
 
-[![Edit examples](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/andrew-w-ross/test-react-hooks/tree/master/examples?autoresize=1&module=%2Fsimple.test.js&previewwindow=tests)
+[![Edit examples](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/andrew-w-ross/test-react-hooks/tree/master/examples?autoresize=1&module=%2Fcount.test.js&previewwindow=tests)
 
 ## Contents
 
