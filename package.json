@@ -11,7 +11,7 @@
   "author": "Andrew Ross <rossirsa@gmail.com>",
   "license": "MIT",
   "private": false,
-  "dependencies": {
+  "peerDependencies": {
     "react": "^16.8.0",
     "react-dom": "^16.8.0"
   },
@@ -36,6 +36,8 @@
     "jest": "^24.1.0",
     "majestic": "^1.4.1",
     "prettier": "^1.16.4",
+    "react": "^16.8.0",
+    "react-dom": "^16.8.0",
     "typescript": "^3.3.1"
   },
   "scripts": {
