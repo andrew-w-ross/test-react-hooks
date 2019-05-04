@@ -7,10 +7,10 @@ afterEach(() => cleanUp());
 // Create your hook
 const useCounter = (initial = 0, inc = 1) => {
   const [count, setCount] = useState(initial);
-  const inc = () => setCount(count + inc);
+  const incFn = () => setCount(count + inc);
   return {
     count,
-    inc
+    incFn
   };
 };
 
@@ -20,9 +20,9 @@ const [prxCounter] = useTestProxy(useCounter);
 
 it("will increment by one", () => {
   {
-    const { count, inc } = prxCounter();
+    const { count, incFn } = prxCounter();
     expect(count).toBe(0);
-    inc();
+    incFn();
   }
 
   {
@@ -33,9 +33,9 @@ it("will increment by one", () => {
 
 it("start with a new initial amount", () => {
   {
-    const { count, inc } = prxCounter(4);
+    const { count, incFn } = prxCounter(4);
     expect(count).toBe(4);
-    inc();
+    incFn();
   }
 
   {
@@ -46,9 +46,9 @@ it("start with a new initial amount", () => {
 
 it("will increment by a new amount", () => {
   {
-    const { count, inc } = prxCounter(0, 2);
+    const { count, incFn } = prxCounter(0, 2);
     expect(count).toBe(0);
-    inc();
+    incFn();
   }
 
   {
