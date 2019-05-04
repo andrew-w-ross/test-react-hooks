@@ -7,16 +7,23 @@ Simple testing for react hooks
 ![](https://img.shields.io/npm/v/test-react-hooks.svg?style=flat)
 [![Build Status](https://travis-ci.com/andrew-w-ross/test-react-hooks.svg?branch=master)](https://travis-ci.com/andrew-w-ross/test-react-hooks)
 
+Example usage can be found at this sandbox
+
 [![Edit examples](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/andrew-w-ross/test-react-hooks/tree/master/examples?autoresize=1&module=%2Fcount.test.js&previewwindow=tests)
 
 ## Contents
 
+- [test-react-hooks ⚓️](#test-react-hooks-%E2%9A%93%EF%B8%8F)
+  - [Contents](#contents)
   - [Get Started](#get-started)
   - [Api](#api)
     - [useTestProxy](#usetestproxy)
+      - [Aruguments](#aruguments)
+      - [Result](#result)
     - [cleanup](#cleanup)
     - [act](#act)
     - [useTestHook](#usetesthook)
+    - [test-react-hooks/ReactMock](#test-react-hooksreactmock)
 
 ## Get Started
 
@@ -180,7 +187,7 @@ Function to be called after your tests to clean up the container created during 
 
 `act(callback: () => void):void`
 
-A re-exported from [react-dom/test-utils](https://reactjs.org/docs/test-utils.html#act)
+Re-exported from [react-dom/test-utils](https://reactjs.org/docs/test-utils.html#act)
 
 Use this if your updating the dom outside the hook.
 
@@ -250,3 +257,12 @@ export type TestHookOptions<TConVal> = {
   mountEager?: boolean;
 };
 ```
+
+### test-react-hooks/ReactMock
+
+Async sometimes change state asynchronously, this will cause react to complain that a change
+was done outside of an `act` call. This mock patches the setState call of react and wraps it in an act call.
+
+If you're running jest you can use it with:
+
+`jest.mock("react", () => require("test-react-hooks/ReactMock"));`
