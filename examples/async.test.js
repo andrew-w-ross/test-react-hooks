@@ -1,6 +1,6 @@
 jest.mock("react", () => require("test-react-hooks/ReactMock"));
 import { useEffect, useState } from "react";
-import { useTestProxy, cleanUp, act } from "test-react-hooks";
+import { useTestProxy, cleanUp } from "test-react-hooks";
 
 afterEach(() => cleanUp());
 
