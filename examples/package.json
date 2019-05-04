@@ -16,5 +16,8 @@
   },
   "scripts": {
     "test": "jest"
+  },
+  "jest": {
+    "clearMocks": true
   }
 }

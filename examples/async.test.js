@@ -32,6 +32,8 @@ it("will wait for update", async () => {
     expect(isLoading).toBe(true);
   }
 
+  //Have to call twice in code sandbox, don't actually do this
+  await control.waitForNextUpdate();
   await control.waitForNextUpdate();
 
   {

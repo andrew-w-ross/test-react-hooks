@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useTestProxy, cleanUp, act } from "test-react-hooks";
+import { createSandboxClickEvent } from "./util";
 
 afterEach(() => cleanUp());
 
@@ -24,6 +25,8 @@ function useOnClickOutside(ref, handler) {
 const [prxClickOutside, control] = useTestProxy(useOnClickOutside);
 const spy = jest.fn();
 
+afterEach(() => jest.clearAllMocks());
+
 it("will detect if clicked outside", () => {
   const ref = { current: control.container };
 
@@ -32,7 +35,7 @@ it("will detect if clicked outside", () => {
 
   //hook proxy doesn't wrap anything but the hook and it's members
   act(() => {
-    document.dispatchEvent(new Event("click"));
+    document.dispatchEvent(createSandboxClickEvent());
   });
 
   prxClickOutside(ref, spy);
@@ -46,7 +49,7 @@ it("wont call if clicked internally", () => {
   expect(spy).not.toHaveBeenCalled();
 
   act(() => {
-    control.container.dispatchEvent(new Event("click"));
+    control.container.dispatchEvent(createSandboxClickEvent());
   });
 
   prxClickOutside(ref, spy);

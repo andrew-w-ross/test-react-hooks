@@ -1,3 +1,4 @@
 {
-  "view": "tests"
+  "view": "tests",
+  "template": "create-react-app"
 }
