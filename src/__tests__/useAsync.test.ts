@@ -1,5 +1,6 @@
+jest.mock("react", () => require("../ReactMock"));
 import { useEffect, useState } from "react";
-import { useTestProxy, act } from "../";
+import { useTestProxy } from "../";
 
 function useAsync(fn: () => Promise<any>) {
   const [value, setValue] = useState(null);
@@ -7,10 +8,8 @@ function useAsync(fn: () => Promise<any>) {
   useEffect(() => {
     setIsLoading(true);
     fn().then(v => {
-      act(() => {
-        setValue(v);
-        setIsLoading(false);
-      });
+      setValue(v);
+      setIsLoading(false);
     });
   }, [fn]);
   return {
@@ -21,6 +20,7 @@ function useAsync(fn: () => Promise<any>) {
 
 const [prxAsync, control] = useTestProxy(useAsync);
 const prxySpy = jest.fn(() => Promise.resolve("foo"));
+const errorSpy = jest.spyOn(console, "error");
 
 it("will wait for update", async () => {
   {
@@ -36,4 +36,5 @@ it("will wait for update", async () => {
     expect(value).toBe("foo");
     expect(isLoading).toBe(false);
   }
+  expect(errorSpy).not.toBeCalled();
 });
