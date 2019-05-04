@@ -1,4 +1,6 @@
-jest.mock("react", () => require("test-react-hooks/ReactMock"));
+// doesn't work on code sandbox
+// uncomment to stop react from complaining about act not being called
+// jest.mock("react", () => require("test-react-hooks/ReactMock"));
 import { useEffect, useState } from "react";
 import { useTestProxy, cleanUp } from "test-react-hooks";
 
