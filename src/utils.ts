@@ -3,14 +3,14 @@ import ReactDOM from "react-dom";
 
 const TEST_ID = "__useTests_hook_component";
 
-function getTestNodes() {
+function getTestNodes(): HTMLElement[] {
   const nodes = Array.from(document.querySelectorAll(`#${TEST_ID}`));
   if (nodes.length > 1) {
     console.error(
       "More than one node found in cleanup, ensure cleanup is called after every test"
     );
   }
-  return nodes;
+  return nodes as HTMLElement[];
 }
 
 /**

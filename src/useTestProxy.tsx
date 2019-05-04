@@ -1,47 +1,8 @@
 import React, { FC } from "react";
-import { act } from "react-dom/test-utils";
 import ReactDOM from "react-dom";
+import { act } from "react-dom/test-utils";
+import { WrapFn, wrapProxy } from "./proxy";
 import { getContainer, unmount } from "./utils";
-
-function isPrimitive(value: any) {
-  if (value == null) return true;
-
-  return typeof value !== "function" && typeof value !== "object";
-}
-
-type ApplyArgs = {
-  target: any;
-  thisArg: any;
-  argumentsList?: any;
-};
-
-type WrapFn = (applyArgs: ApplyArgs, cb: () => void) => any;
-
-function reactProxy<T>(target: T, wrapFn: WrapFn): T {
-  return isPrimitive(target)
-    ? target
-    : new Proxy(target, createHandler(wrapFn));
-}
-
-function createHandler(wrapFn: WrapFn): ProxyHandler<any> {
-  return {
-    get(target: any, property: any, receiver: any) {
-      const descriptor = Reflect.getOwnPropertyDescriptor(target, property);
-      const result = Reflect.get(target, property, receiver);
-
-      return descriptor && descriptor.configurable
-        ? reactProxy(result, wrapFn)
-        : result;
-    },
-    apply(target: any, thisArg: any, argumentsList: any) {
-      let result;
-      wrapFn({ target, thisArg, argumentsList }, () => {
-        result = Reflect.apply(target, thisArg, argumentsList);
-      });
-      return reactProxy(result, wrapFn);
-    }
-  };
-}
 
 type TestHookProps = {
   callback: Function;
@@ -56,49 +17,114 @@ function TestHook({ callback, children }: TestHookProps) {
 
 const DefaultWrapper: FC = ({ children }) => <>{children}</>;
 
-export type UseProxyOptions<P> = {
-  wrapper?: React.ComponentType<P>;
-  props?: P;
-};
+/**
+ * Options for useTestProxy
+ *
+ * @export
+ * @interface UseProxyOptions
+ * @template TProps
+ */
+export interface UseProxyOptions<TProps> {
+  /**
+   * Component to wrap the test component in
+   *
+   * @type {React.ComponentType<TProps>}
+   */
+  wrapper?: React.ComponentType<TProps>;
 
-export function useTestProxy<T, P = any>(
-  hook: T,
-  options: UseProxyOptions<P> = {}
-) {
-  let { wrapper: Wrapper = DefaultWrapper, props = {} } = options;
+  /**
+   * Initial  props to render the wrapper component with
+   */
+  props?: TProps;
+}
+
+/**
+ * Control object for the proxy hook
+ *
+ * @export
+ * @interface HookControl
+ * @template TProps
+ */
+export interface HookControl<TProps> {
+  /**
+   * Unmounts the test component
+   * useful when testing the cleanup of useEffect or useLayoutEffect
+   *
+   * @memberof HookControl
+   */
+  unmount: () => void;
+  /**
+   * Updates the props to be used in the wrapper component
+   * Does not cause a rerender, call the proxy hook to force that
+   */
+  props: TProps;
+  /**
+   * The container of the test component
+   */
+  readonly container: HTMLElement;
+  /**
+   * A promise that will resolve on update
+   * Use when waiting for async effects to run
+   */
+  waitForNextUpdate: () => Promise<void>;
+}
+
+/**
+ * Creates a proxy hook and a control object for that hook
+ * Proxy hook will rerender when called and wrap
+ * Calls in act when appropriate
+ *
+ * @export
+ * @template THook
+ * @template TProps
+ * @param {THook} hook
+ * @param {UseProxyOptions<TProps>} [options={}]
+ * @returns {[THook, HookControl<TProps>]}
+ */
+export function useTestProxy<THook, TProps = any>(
+  hook: THook,
+  options: UseProxyOptions<TProps> = {}
+): [THook, HookControl<TProps>] {
+  const { wrapper: Wrapper = DefaultWrapper } = options;
+  let { props } = options;
+
   const resolvers: Function[] = [];
   function runResolvers() {
-    resolvers.splice(0, resolvers.length).forEach(resolve => resolve());
+    resolvers.splice(0, resolvers.length).forEach(resolve => {
+      resolve();
+    });
   }
 
-  const wrapFn: WrapFn = ({ target }, applyFn) => {
+  function render(applyFn: () => void) {
+    ReactDOM.render(
+      <Wrapper {...props as any}>
+        <TestHook callback={applyFn}>{runResolvers}</TestHook>
+      </Wrapper>,
+      getContainer()
+    );
+  }
+
+  const wrapFn: WrapFn = (target, applyFn) => {
     act(() => {
       if (target === hook) {
-        ReactDOM.render(
-          //@ts-ignore
-          <Wrapper {...props}>
-            <TestHook callback={applyFn}>{runResolvers}</TestHook>
-          </Wrapper>,
-          getContainer()
-        );
+        render(applyFn);
       } else {
         applyFn();
       }
     });
   };
 
-  const control = {
+  const control: HookControl<TProps> = {
     unmount,
-    set props(newValue: P) {
+    set props(newValue: TProps) {
       props = newValue;
     },
     get container() {
-      //Should proxy and add act to all calls here
       return getContainer();
     },
     waitForNextUpdate: () =>
       new Promise<void>(resolve => resolvers.push(resolve))
   };
 
-  return [reactProxy(hook, wrapFn), control] as const;
+  return [wrapProxy(hook, wrapFn), control];
 }
