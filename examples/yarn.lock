@@ -3432,9 +3432,9 @@ test-exclude@^5.2.3:
     require-main-filename "^2.0.0"
 
 test-react-hooks@^1.0.3:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/test-react-hooks/-/test-react-hooks-1.1.0.tgz#c195c932b2b2451dc06b2301fe66875e42975804"
-  integrity sha512-4ujw7wYFHDTmiQ7TMFlpdlbrqpOufnLNLp6fG+DLn0h268KZhvn7Q8qzp6+GIs+wnMJm6xHTzPHzyVPqRCLkIQ==
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/test-react-hooks/-/test-react-hooks-1.1.1.tgz#bb4f8ea72f41fc8ba4ac6d0871805500017fcabf"
+  integrity sha512-vDSxrPQqIArUIGdAUDS88wpmxWt7cQrPc3r90T/keHkFoUDqNHkIFSwbF3dKKX0gJdlfT4bNTQEgc6dDujf60A==
 
 throat@^4.0.0:
   version "4.1.0"

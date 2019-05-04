@@ -1,10 +1,6 @@
-if (!global["jest"]) {
-  console.warn("Only tested this with jest, be careful.");
-}
+jest.dontMock("react");
 
-const React = require.requireActual
-  ? require.requireActual("react")
-  : require("react");
+const React = require("react");
 const { act } = require("react-dom/test-utils");
 
 const reactHandler = {
