@@ -1,6 +1,6 @@
 {
   "name": "test-react-hooks",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Testing for react hooks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
