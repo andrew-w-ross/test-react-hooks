@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
-import { useTestProxy } from "../useTestProxy";
+import { useTestProxy, act } from "../";
 
 function useAsync(fn: () => Promise<any>) {
   const [value, setValue] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     setIsLoading(true);
-    fn()
-      .then(v => {
+    fn().then(v => {
+      act(() => {
         setValue(v);
-      })
-      .finally(() => {
         setIsLoading(false);
       });
+    });
   }, [fn]);
   return {
     value,

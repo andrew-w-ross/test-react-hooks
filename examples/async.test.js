@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTestProxy, cleanUp } from "test-react-hooks";
+import { useTestProxy, cleanUp, act } from "test-react-hooks";
 
 afterEach(() => cleanUp());
 
@@ -8,13 +8,10 @@ function useAsync(fn) {
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     setIsLoading(true);
-    fn()
-      .then(v => {
-        setValue(v);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    fn().then(v => {
+      setValue(v);
+      setIsLoading(false);
+    });
   }, [fn]);
   return {
     value,
@@ -32,8 +29,6 @@ it("will wait for update", async () => {
     expect(isLoading).toBe(true);
   }
 
-  //Have to call twice in code sandbox, don't actually do this
-  await control.waitForNextUpdate();
   await control.waitForNextUpdate();
 
   {
