@@ -5,8 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist",
-    "ReactMock.js"
+    "dist"
   ],
   "repository": "git@github.com:andrew-w-ross/test-react-hooks.git",
   "author": "Andrew Ross <rossirsa@gmail.com>",
