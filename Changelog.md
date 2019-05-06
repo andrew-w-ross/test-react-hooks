@@ -6,3 +6,9 @@
 
 - Added examples
 - Added changelog
+
+# V2.0.0
+
+- Removed useTestHook
+- Added useTestProxy
+- Added act wrap for react
