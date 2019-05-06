@@ -1,4 +1,3 @@
-jest.mock("react", () => require("../../ReactMock.js"));
 import { useEffect, useState } from "react";
 import { useTestProxy } from "../";
 
