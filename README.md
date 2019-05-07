@@ -18,7 +18,7 @@ Example usage can be found at this sandbox
   - [Get Started](#get-started)
   - [Api](#api)
     - [useTestProxy](#usetestproxy)
-      - [Aruguments](#aruguments)
+      - [Arguments](#arguments)
       - [Result](#result)
     - [cleanup](#cleanup)
     - [act](#act)
@@ -103,7 +103,7 @@ it("will increment by a new amount", () => {
 
 Creates a proxy of the hook passed in for testing.
 
-#### Aruguments
+#### Arguments
 
 - `hook` : hook to be tested
 
