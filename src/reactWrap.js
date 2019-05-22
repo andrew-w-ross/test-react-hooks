@@ -3,7 +3,7 @@ const { act } = require("react-dom/test-utils");
 
 //Maybe it shouldn't be a proxy?
 const reactHandler = {
-  apply(target: any, thisArg: any, argArray: any) {
+  apply(target, thisArg, argArray) {
     const result = Reflect.apply(target, thisArg, argArray);
     result[1] = new Proxy(result[1], actHandler);
     return result;
@@ -11,7 +11,7 @@ const reactHandler = {
 };
 
 const actHandler = {
-  apply(target: any, thisArg: any, argArray: any) {
+  apply(target, thisArg, argArray) {
     let result;
     act(() => {
       result = Reflect.apply(target, thisArg, argArray);

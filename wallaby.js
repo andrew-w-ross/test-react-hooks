@@ -2,7 +2,6 @@ module.exports = function(wallaby) {
   return {
     files: [
       "setup.js",
-      "ReactMock.js",
       "src/**/*.{ts,tsx,js,jsx}",
       "!src/**/*.test.{ts,tsx,js,jsx}"
     ],

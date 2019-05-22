@@ -12,6 +12,13 @@
             "type": "npm",
             "script": "build:babel",
             "problemMatcher": []
+        },
+        {
+            "type": "npm",
+            "script": "build:tsc",
+            "problemMatcher": [
+                "$tsc"
+            ]
         }
     ]
 }

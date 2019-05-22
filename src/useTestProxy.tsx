@@ -1,4 +1,4 @@
-import "./reactWrap";
+require("./reactWrap");
 import React, { FC } from "react";
 import ReactDOM from "react-dom";
 import { act } from "react-dom/test-utils";

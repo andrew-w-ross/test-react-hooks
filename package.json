@@ -12,8 +12,8 @@
   "license": "MIT",
   "private": false,
   "peerDependencies": {
-    "react": "^16.8.0",
-    "react-dom": "^16.8.0"
+    "react": "*",
+    "react-dom": "*"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
@@ -46,7 +46,7 @@
     "check": "eslint src/**/*.{ts,tsx,js,jsx}",
     "clean": "rm -rf dist",
     "build:tsc": "tsc -p tsconfig.build.json",
-    "build:babel": "babel src --out-dir dist --extensions '.ts,.tsx' --ignore '**/__tests__'",
+    "build:babel": "babel src --out-dir dist --extensions '.ts,.tsx,.js' --ignore '**/__tests__'",
     "build": "yarn clean && yarn build:tsc && yarn build:babel",
     "prepare": "yarn check && yarn build"
   },
