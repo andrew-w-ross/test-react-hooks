@@ -1,6 +1,8 @@
 function isPrimitive(value: any) {
   if (value == null) return true;
 
+  if (value instanceof Date) return true;
+
   return typeof value !== "function" && typeof value !== "object";
 }
 
