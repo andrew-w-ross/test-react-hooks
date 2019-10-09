@@ -1,7 +1,7 @@
 import { useRef } from "react";
-import { useTestProxy } from "../useTestProxy";
+import { createTestProxy } from "../createTestProxy";
 
-const [prxRef] = useTestProxy(useRef);
+const [prxRef] = createTestProxy(useRef);
 
 it("will set initiat with value", () => {
   const ref = prxRef(1);

@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import { useTestProxy } from "../";
+import { createTestProxy } from "../";
 
 type State = {
   isLoading: boolean;
@@ -59,7 +59,7 @@ function useAsyncReducer(fn: () => Promise<any>) {
   return state;
 }
 
-const [prxAsyncReducer, control] = useTestProxy(useAsyncReducer);
+const [prxAsyncReducer, control] = createTestProxy(useAsyncReducer);
 const errorSpy = jest.spyOn(console, "error");
 
 it("will resolve with a result", async () => {

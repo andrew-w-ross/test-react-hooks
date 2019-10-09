@@ -1,9 +1,9 @@
-const React = require("react");
-const { act } = require("react-dom/test-utils");
+import React from "react";
+import { act } from "react-dom/test-utils";
 
 //Maybe it shouldn't be a proxy?
 const reactHandler = {
-  apply(target, thisArg, argArray) {
+  apply(target: any, thisArg: any, argArray: any) {
     const result = Reflect.apply(target, thisArg, argArray);
     result[1] = new Proxy(result[1], actHandler);
     return result;
@@ -11,7 +11,7 @@ const reactHandler = {
 };
 
 const actHandler = {
-  apply(target, thisArg, argArray) {
+  apply(target: any, thisArg: any, argArray: any) {
     let result;
     act(() => {
       result = Reflect.apply(target, thisArg, argArray);

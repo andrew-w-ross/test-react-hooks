@@ -18,6 +18,10 @@
     "test": "jest"
   },
   "jest": {
-    "clearMocks": true
+    "clearMocks": true,
+    "moduleDirectories": [
+      "<rootDir>/node_modules",
+      "node_modules"
+    ]
   }
 }

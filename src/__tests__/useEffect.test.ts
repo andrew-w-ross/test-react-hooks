@@ -1,10 +1,10 @@
-import { useTestProxy } from "../";
+import { createTestProxy } from "../";
 import { useEffect } from "react";
 
 const spyLeave = jest.fn();
 const spy = jest.fn(() => spyLeave);
 
-const [prxEffect, control] = useTestProxy(useEffect);
+const [prxEffect, control] = createTestProxy(useEffect);
 
 it("will call on mount", () => {
   prxEffect(spy, []);

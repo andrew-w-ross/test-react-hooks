@@ -19,7 +19,7 @@ function TestHook({ callback, children }: TestHookProps) {
 const DefaultWrapper: FC = ({ children }) => <>{children}</>;
 
 /**
- * Options for useTestProxy
+ * Options for createTestProxy
  *
  * @export
  * @interface UseProxyOptions
@@ -82,7 +82,7 @@ export interface HookControl<TProps> {
  * @param {UseProxyOptions<TProps>} [options={}]
  * @returns {[THook, HookControl<TProps>]}
  */
-export function useTestProxy<THook, TProps = any>(
+export function createTestProxy<THook, TProps = any>(
   hook: THook,
   options: UseProxyOptions<TProps> = {}
 ): [THook, HookControl<TProps>] {
@@ -98,7 +98,7 @@ export function useTestProxy<THook, TProps = any>(
 
   function render(applyFn: () => void) {
     ReactDOM.render(
-      <Wrapper {...props as any}>
+      <Wrapper {...(props as any)}>
         <TestHook callback={applyFn}>{runResolvers}</TestHook>
       </Wrapper>,
       getContainer()
@@ -129,3 +129,12 @@ export function useTestProxy<THook, TProps = any>(
 
   return [wrapProxy(hook, wrapFn), control];
 }
+
+/**
+ * @deprecated use createTestProxy
+ */
+export const useTestProxy: typeof createTestProxy = (...args: any[]) => {
+  console.warn("useTestProxy is deperacted, use createTestProxy instead");
+  //@ts-ignore
+  return createTestProxy(...args);
+};

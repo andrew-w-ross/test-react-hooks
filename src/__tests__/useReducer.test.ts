@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { useTestProxy } from "../useTestProxy";
+import { createTestProxy } from "../createTestProxy";
 
 const initialState = { count: 0 };
 type Action = {
@@ -17,7 +17,7 @@ function reducer(state: typeof initialState, action: Action) {
   }
 }
 
-const [prxReducer] = useTestProxy(useReducer);
+const [prxReducer] = createTestProxy(useReducer);
 
 it("will have initial state", () => {
   const [state, dispatch] = prxReducer(reducer, initialState);

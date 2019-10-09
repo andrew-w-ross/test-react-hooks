@@ -5,7 +5,6 @@ Simple testing for react hooks
 ![](https://img.shields.io/david/andrew-w-ross/test-react-hooks.svg?style=flat)
 ![](https://img.shields.io/npm/dt/test-react-hooks.svg?style=flat)
 ![](https://img.shields.io/npm/v/test-react-hooks.svg?style=flat)
-[![Build Status](https://travis-ci.com/andrew-w-ross/test-react-hooks.svg?branch=master)](https://travis-ci.com/andrew-w-ross/test-react-hooks)
 
 Example usage can be found at this sandbox
 
@@ -34,7 +33,7 @@ To install either :
 Example
 
 ```javascript
-import { useTestProxy, cleanUp } from "test-react-hooks";
+import { createTestProxy, cleanUp } from "test-react-hooks";
 import { useState } from "react";
 
 //Cleans up the dom container that's created during testing
@@ -53,7 +52,7 @@ const useCounter = (initial = 0, inc = 1) => {
 
 //Proxy of your hook, use it like you would in a component
 //Internally calls render for the hook and act on everything else
-const [prxCounter] = useTestProxy(useCounter);
+const [prxCounter] = createTestProxy(useCounter);
 
 it("will increment by one", () => {
   {
@@ -97,9 +96,9 @@ it("will increment by a new amount", () => {
 
 ## Api
 
-### useTestProxy
+### createTestProxy
 
-`useTestProxy<THook, TProps = any>(hook: THook,options: UseProxyOptions<TProps> = {}) => [THook, HookControl<TProps>]`
+`createTestProxy<THook, TProps = any>(hook: THook,options: UseProxyOptions<TProps> = {}) => [THook, HookControl<TProps>]`
 
 Creates a proxy of the hook passed in for testing.
 
@@ -111,7 +110,7 @@ Creates a proxy of the hook passed in for testing.
 
   ```typescript
   /**
-   * Options for useTestProxy
+   * Options for createTestProxy
    *
    * @export
    * @interface UseProxyOptions

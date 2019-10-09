@@ -1,7 +1,7 @@
 import { useDebugValue } from "react";
-import { useTestProxy } from "../useTestProxy";
+import { createTestProxy } from "../createTestProxy";
 
-const [prxDebugValue] = useTestProxy(useDebugValue);
+const [prxDebugValue] = createTestProxy(useDebugValue);
 
 it("won't break", () => {
   prxDebugValue("value");

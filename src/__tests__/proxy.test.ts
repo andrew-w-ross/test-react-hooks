@@ -25,6 +25,13 @@ it("will ignore dates", () => {
   expect(wrapFn).not.toBeCalled();
 });
 
+it("will ignore promises", async () => {
+  const value = Promise.resolve(12);
+  const proxy = wrapProxy(value, wrapFn);
+  expect(proxy).toBe(value);
+  expect(wrapFn).not.toBeCalled();
+});
+
 it("will wrap functions", () => {
   const value = () => true;
   const proxy = wrapProxy(value, wrapFn);

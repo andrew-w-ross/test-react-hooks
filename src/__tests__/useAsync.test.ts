@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTestProxy } from "../";
+import { createTestProxy } from "../";
 
 function useAsync(fn: () => Promise<any>) {
   const [value, setValue] = useState(null);
@@ -17,7 +17,7 @@ function useAsync(fn: () => Promise<any>) {
   };
 }
 
-const [prxAsync, control] = useTestProxy(useAsync);
+const [prxAsync, control] = createTestProxy(useAsync);
 const prxySpy = jest.fn(() => Promise.resolve("foo"));
 const errorSpy = jest.spyOn(console, "error");
 

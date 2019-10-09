@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useTestProxy } from "../useTestProxy";
+import { createTestProxy } from "../createTestProxy";
 
 type ThrowWhen = "render" | "aftermount" | "unmount";
 
@@ -13,7 +13,7 @@ function useError(when: ThrowWhen, deps: any[] = []) {
   }, deps);
 }
 
-const [prxError, control] = useTestProxy(useError);
+const [prxError, control] = createTestProxy(useError);
 it("will throw straight away", () => {
   expect(() => prxError("render")).toThrowError("render");
 });

@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import { useTestProxy, cleanUp } from "test-react-hooks";
+import { createTestProxy, cleanUp } from "test-react-hooks";
 
 afterEach(() => cleanUp());
 
@@ -10,13 +10,13 @@ const Wrapper = ({ val, children }) => (
 );
 
 it("will get the default value", () => {
-  const [prxContext] = useTestProxy(useContext);
+  const [prxContext] = createTestProxy(useContext);
   const res = prxContext(TestContext);
   expect(res).toBe(0);
 });
 
 it("will get the value from the above context", () => {
-  const [prxContext, control] = useTestProxy(useContext, {
+  const [prxContext, control] = createTestProxy(useContext, {
     wrapper: Wrapper,
     props: { val: 2 }
   });

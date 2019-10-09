@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useTestProxy } from "..";
+import { useState } from "react";
+import { createTestProxy } from "..";
 
 function useDeepHook() {
   const [count, setCount] = useState(0);
@@ -12,7 +12,7 @@ function useDeepHook() {
   };
 }
 
-const [prxDeepHook] = useTestProxy(useDeepHook);
+const [prxDeepHook] = createTestProxy(useDeepHook);
 
 it("will render", () => {
   const { countObj } = prxDeepHook();

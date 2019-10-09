@@ -1,6 +1,6 @@
 import { RefObject, useEffect } from "react";
 import { act } from "react-dom/test-utils";
-import { useTestProxy } from "../useTestProxy";
+import { createTestProxy } from "../createTestProxy";
 
 //Taken from https://usehooks.com/useOnClickOutside/
 function useOnClickOutside(ref: RefObject<Element>, handler: () => void) {
@@ -21,7 +21,7 @@ function useOnClickOutside(ref: RefObject<Element>, handler: () => void) {
   }, [ref, handler]);
 }
 
-const [prxClickOutside, control] = useTestProxy(useOnClickOutside);
+const [prxClickOutside, control] = createTestProxy(useOnClickOutside);
 const spy = jest.fn();
 
 it("will detect if clicked outside", () => {

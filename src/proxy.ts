@@ -3,6 +3,8 @@ function isPrimitive(value: any) {
 
   if (value instanceof Date) return true;
 
+  if (value instanceof Promise) return true;
+
   return typeof value !== "function" && typeof value !== "object";
 }
 

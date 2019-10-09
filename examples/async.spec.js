@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTestProxy, cleanUp } from "test-react-hooks";
+import { createTestProxy, cleanUp } from "test-react-hooks";
 
 afterEach(() => cleanUp());
 
@@ -19,7 +19,7 @@ function useAsync(fn) {
   };
 }
 
-const [prxAsync, control] = useTestProxy(useAsync);
+const [prxAsync, control] = createTestProxy(useAsync);
 const prxySpy = jest.fn(() => Promise.resolve("foo"));
 
 it("will wait for update", async () => {

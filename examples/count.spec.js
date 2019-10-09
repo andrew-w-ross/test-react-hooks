@@ -1,4 +1,4 @@
-import { useTestProxy, cleanUp } from "test-react-hooks";
+import { createTestProxy, cleanUp } from "test-react-hooks";
 import { useState } from "react";
 
 //Cleans up the dom container that's created during testing
@@ -16,7 +16,7 @@ const useCounter = (initial = 0, inc = 1) => {
 
 //Proxy of your hook, use it like you would in a component
 //Internally calls render for the hook and act on everything else
-const [prxCounter] = useTestProxy(useCounter);
+const [prxCounter] = createTestProxy(useCounter);
 
 it("will increment by one", () => {
   {

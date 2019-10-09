@@ -1,7 +1,7 @@
-import { useTestProxy } from "../";
+import { createTestProxy } from "../";
 import { useState } from "react";
 
-const [prxState] = useTestProxy(useState);
+const [prxState] = createTestProxy(useState);
 
 it("will get initial state", () => {
   const [count] = prxState(1);

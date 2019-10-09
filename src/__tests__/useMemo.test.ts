@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { useTestProxy } from "../useTestProxy";
+import { createTestProxy } from "../createTestProxy";
 
-const [prxMemo] = useTestProxy(useMemo);
+const [prxMemo] = createTestProxy(useMemo);
 const spy = jest.fn(() => 1);
 
 it("will return a result", () => {
