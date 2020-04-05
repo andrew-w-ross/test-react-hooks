@@ -36,3 +36,16 @@ jobs:
           yarn
           yarn build
           yarn test
+
+  examples:
+    needs: build
+    name: Test Node V${{ matrix.node }}
+    steps:
+      - name: Link current
+        run: yarn link
+
+      - name: Test examples
+        run: |
+          yarn link test-react-hooks
+          yarn
+          yarn test
