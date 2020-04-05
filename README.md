@@ -9,7 +9,7 @@ Simple testing for react hooks
 
 Example usage can be found at this sandbox
 
-[![Edit examples](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/andrew-w-ross/test-react-hooks/tree/master/examples?autoresize=1&module=%2Fcount.test.js&previewwindow=tests)
+[![Edit examples](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/andrew-w-ross/test-react-hooks/tree/master/examples?autoresize=1&module=%2Fcount.spec.js&previewwindow=tests)
 
 ## Contents
 
