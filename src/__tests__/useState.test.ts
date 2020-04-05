@@ -46,7 +46,7 @@ it("will apply all changes", () => {
   }
 });
 
-it("will work with state", () => {
+it("will work with date", () => {
   const initial = new Date("2019-01-01 12:33:12");
   const [res] = prxState(initial);
   expect(res).toEqual(initial);

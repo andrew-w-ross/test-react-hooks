@@ -5,10 +5,10 @@ function useDeepHook() {
   const [count, setCount] = useState(0);
   const countObj = {
     count,
-    inc: () => setCount(count + 1)
+    inc: () => setCount(count + 1),
   };
   return {
-    countObj
+    countObj,
   };
 }
 
@@ -22,14 +22,14 @@ it("will render", () => {
 it("will increase", () => {
   {
     const {
-      countObj: { inc }
+      countObj: { inc },
     } = prxDeepHook();
     inc();
   }
 
   {
     const {
-      countObj: { count }
+      countObj: { count },
     } = prxDeepHook();
     expect(count).toBe(1);
   }
@@ -43,7 +43,7 @@ it("will handle double dot", () => {
 
   {
     const {
-      countObj: { count }
+      countObj: { count },
     } = prxDeepHook();
     expect(count).toBe(1);
   }

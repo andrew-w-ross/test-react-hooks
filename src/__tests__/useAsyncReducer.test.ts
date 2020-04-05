@@ -8,7 +8,7 @@ type State = {
 };
 
 const initialState: State = {
-  isLoading: false
+  isLoading: false,
 };
 type Actions =
   | {
@@ -27,17 +27,17 @@ function reducer(state: State, action: Actions): State {
   switch (action.type) {
     case "start":
       return {
-        isLoading: true
+        isLoading: true,
       };
     case "finish":
       return {
         isLoading: false,
-        result: action.result
+        result: action.result,
       };
     case "error":
       return {
         isLoading: false,
-        error: action.error
+        error: action.error,
       };
     default:
       return state;
@@ -49,10 +49,10 @@ function useAsyncReducer(fn: () => Promise<any>) {
   useEffect(() => {
     dispatch({ type: "start" });
     fn()
-      .then(result => {
+      .then((result) => {
         dispatch({ type: "finish", result });
       })
-      .catch(error => {
+      .catch((error) => {
         dispatch({ type: "error", error });
       });
   }, [fn]);
@@ -69,7 +69,7 @@ it("will resolve with a result", async () => {
     expect(result).toEqual({
       isLoading: true,
       result: undefined,
-      error: undefined
+      error: undefined,
     });
   }
 
@@ -80,7 +80,7 @@ it("will resolve with a result", async () => {
     expect(result).toEqual({
       isLoading: false,
       result: "foo",
-      error: undefined
+      error: undefined,
     });
   }
   expect(errorSpy).not.toBeCalled();
@@ -93,7 +93,7 @@ it("will resolve with an error", async () => {
     expect(result).toEqual({
       isLoading: true,
       result: undefined,
-      error: undefined
+      error: undefined,
     });
   }
 
@@ -104,7 +104,7 @@ it("will resolve with an error", async () => {
     expect(result).toEqual({
       isLoading: false,
       result: undefined,
-      error: "error"
+      error: "error",
     });
   }
   expect(errorSpy).not.toBeCalled();

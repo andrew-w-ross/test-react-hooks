@@ -6,14 +6,14 @@ function useAsync(fn: () => Promise<any>) {
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     setIsLoading(true);
-    fn().then(v => {
+    fn().then((v) => {
       setValue(v);
       setIsLoading(false);
     });
   }, [fn]);
   return {
     value,
-    isLoading
+    isLoading,
   };
 }
 

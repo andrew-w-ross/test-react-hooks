@@ -23,12 +23,13 @@ it("should not resolve if the same value is passed in", async () => {
   const spy = jest.fn();
   {
     const addResolve = prxResolveOnChange([1]);
-    addResolve().then(v => spy(v));
+    addResolve().then(spy);
   }
   expect(spy).not.toHaveBeenCalled();
   {
+    const updatePromise = control.waitForNextUpdate();
     prxResolveOnChange([2]);
-    await new Promise(resolve => setImmediate(resolve));
+    await updatePromise;
   }
   expect(spy).toHaveBeenCalledTimes(1);
   expect(spy).toHaveBeenCalledWith(2);

@@ -1,22 +1,24 @@
 name: CI
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 jobs:
   # This workflow contains a single job called "build"
   build:
-    name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["10", "12", "13"]
+    name: Test Node V${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v1
-      - uses: borales/actions-yarn@v2.0.0
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v1
         with:
-          cmd: install # will run `yarn install` command
-      - uses: borales/actions-yarn@v2.0.0
-        with:
-          cmd: build # will run `yarn build` command
-      - uses: borales/actions-yarn@v2.0.0
-        with:
-          cmd: test # will run `yarn test` command
+          node-version: ${{ matrix.node }}
+      - run: |
+          yarn
+          yarn build
+          yarn test

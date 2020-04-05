@@ -8,6 +8,9 @@ function isPrimitive(value: any) {
   return typeof value !== "function" && typeof value !== "object";
 }
 
+/**
+ * Describes a function that will take a target and then have a callback that does something to the target
+ */
 export type WrapFn = (target: any, cb: () => void) => any;
 
 export function wrapProxy<T>(target: T, wrapFn: WrapFn): T {
