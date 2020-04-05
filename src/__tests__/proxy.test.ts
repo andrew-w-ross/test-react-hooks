@@ -51,3 +51,19 @@ it("will wrap function results", () => {
   proxy()();
   expect(wrapFn).toBeCalledTimes(2);
 });
+
+it("can go deep", () => {
+  const value = {
+    a() {
+      return {
+        b() {
+          return "c";
+        }
+      };
+    }
+  };
+
+  const proxy = wrapProxy(value, wrapFn);
+  expect(proxy.a().b()).toBe("c");
+  expect(wrapFn).toHaveBeenCalledTimes(2);
+});

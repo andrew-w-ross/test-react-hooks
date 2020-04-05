@@ -16,7 +16,7 @@ it("will get the default value", () => {
 it("will get the value from the above context", () => {
   const [prxContext, control] = createTestProxy(useContext, {
     wrapper: Wrapper,
-    props: { val: 2 }
+    props: { val: 2 },
   });
   {
     const res = prxContext(TestContext);

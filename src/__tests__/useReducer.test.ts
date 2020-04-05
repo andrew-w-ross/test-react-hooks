@@ -20,7 +20,7 @@ function reducer(state: typeof initialState, action: Action) {
 const [prxReducer] = createTestProxy(useReducer);
 
 it("will have initial state", () => {
-  const [state, dispatch] = prxReducer(reducer, initialState);
+  const [state] = prxReducer(reducer, initialState);
   expect(state.count).toBe(0);
 });
 
