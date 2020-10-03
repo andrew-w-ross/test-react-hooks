@@ -5,7 +5,6 @@ on:
   pull_request:
     branches: [master]
 jobs:
-  # This workflow contains a single job called "build"
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -48,8 +47,8 @@ jobs:
           yarn test
 
       - name: Publish
-        if: ${{ matrix.node == "lts" }}
+        if: ${{ matrix.node == 'lts' }}
         uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
-          dry-run: false
+          dry-run: true
