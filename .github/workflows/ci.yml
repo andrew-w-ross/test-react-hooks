@@ -30,7 +30,9 @@ jobs:
           yarn test
 
       - name: Link Package
-        run: yarn link
+        run: |
+          yarn build
+          yarn link
 
       - name: Test examples
         working-directory: ./examples
