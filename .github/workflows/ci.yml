@@ -5,12 +5,11 @@ on:
   pull_request:
     branches: [master]
 jobs:
-  # This workflow contains a single job called "build"
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["10", "12", "13"]
+        node: ["10", "12", "14"]
     name: Test Node V${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2
@@ -20,25 +19,20 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - uses: actions/cache@v1
-        id: yarn-cache
+      - uses: actions/cache@v2
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          path: "**/node_modules"
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
 
       - run: |
           yarn
-          yarn build
+          yarn run check
           yarn test
 
       - name: Link Package
-        run: yarn link
+        run: |
+          yarn build
+          yarn link
 
       - name: Test examples
         working-directory: ./examples
