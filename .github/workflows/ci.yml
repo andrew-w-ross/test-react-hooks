@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["10", "12", "14", "lts"]
+        node: ["10", "12", "14"]
     name: Test Node V${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2
@@ -47,7 +47,7 @@ jobs:
           yarn test
 
       - name: Publish
-        if: ${{ matrix.node == 'lts' }}
+        if: ${{ matrix.node == '14' }}
         uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
