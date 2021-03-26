@@ -1,6 +1,11 @@
 module.exports = {
     root: true,
     parser: "@typescript-eslint/parser",
+    settings: {
+        react: {
+            version: "detect",
+        },
+    },
     parserOptions: {
         sourceType: "module",
         project: ["./packages/*/tsconfig.json"],
