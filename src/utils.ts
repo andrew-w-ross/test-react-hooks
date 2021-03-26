@@ -19,3 +19,26 @@ export function returnAct<TResult>(actFn: () => TResult): TResult {
 
     return result;
 }
+
+/**
+ * Creates a deferred object with the promise, reject and resolve value.
+ * Will reset the internal state whenever a resolve or reject occures
+ */
+export function createDeferred<T = void>() {
+    const result = {
+        resolve: (_value: T | PromiseLike<T>) => {},
+        reject: (_reason?: any) => {},
+        promise: Promise.resolve((null as unknown) as T),
+    };
+
+    function reset() {
+        result.promise = new Promise<T>((resolve, reject) => {
+            result.resolve = resolve;
+            result.reject = reject;
+        }).finally(() => reset());
+    }
+
+    reset();
+
+    return result;
+}

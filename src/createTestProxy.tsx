@@ -5,7 +5,8 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import type { WrapApplyFn } from "./proxy";
 
 import { wrapProxy } from "./proxy";
-import { returnAct } from "./utils";
+import { createDeferred, returnAct } from "./utils";
+import { CallbackComponent } from "./CallbackComponent";
 
 export type TestHook = (...args: any[]) => any;
 
@@ -16,15 +17,6 @@ export function cleanUp() {
 }
 
 if (!process.env.TEST_REACT_HOOKS_NO_CLEANUP) globalThis?.afterEach?.(cleanUp);
-
-type TestHookProps = {
-    callback: Function;
-};
-
-function TestHook({ callback }: TestHookProps) {
-    callback();
-    return null;
-}
 
 const DefaultWrapper: FC = ({ children }) => <>{children}</>;
 
@@ -41,19 +33,13 @@ const wrapApplyAct: WrapApplyFn = (...args) =>
  * @interface UseProxyOptions
  * @template TProps
  */
-export interface UseProxyOptions<TProps> {
+export interface UseProxyOptions {
     /**
      * Component to wrap the test component in
-     *
-     * @type {React.ComponentType<TProps>}
      */
-    wrapper?: React.ComponentType<TProps>;
-
-    /**
-     * Initial  props to render the wrapper component with
-     */
-    props?: TProps;
+    wrapper?: React.ComponentType<{}>;
 }
+
 /**
  * Creates a proxy hook and a control object for that hook
  * Proxy hook will rerender when called and wrap
@@ -66,22 +52,17 @@ export interface UseProxyOptions<TProps> {
  * @param {UseProxyOptions<TProps>} [options={}]
  * @returns {[THook, HookControl<TProps>]}
  */
-export function createTestProxy<THook extends TestHook, TProps = any>(
+export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    options: UseProxyOptions<TProps> = {},
+    options: UseProxyOptions = {},
 ) {
-    const { wrapper: Wrapper = DefaultWrapper } = options;
-    let { props: wrapperProps } = options;
+    let { wrapper: Wrapper = DefaultWrapper } = options;
     let reactTestRenderer: ReactTestRenderer | null = null;
     let result: ReturnType<TestHook> | undefined = undefined;
+    let caughtError: Error | null = null;
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
 
-    const resolvers: Function[] = [];
-    function runResolvers() {
-        resolvers.splice(0, resolvers.length).forEach((resolve) => {
-            resolve();
-        });
-    }
+    const deferred = createDeferred();
 
     function cleanup() {
         act(() => {
@@ -93,18 +74,23 @@ export function createTestProxy<THook extends TestHook, TProps = any>(
     }
 
     const render = (...params: Parameters<THook>) => {
-        let caughtError: Error | null = null;
+        let wasCalled = false;
+        caughtError = null;
         const element = (
             <ErrorBoundary
                 onError={(error) => {
                     caughtError = error;
                 }}
             >
-                <Wrapper {...(wrapperProps ?? ({} as TProps))}>
-                    <TestHook
+                <Wrapper>
+                    <CallbackComponent
                         callback={() => {
-                            result = proxiedHook(...params);
-                            runResolvers();
+                            wasCalled = true;
+                            try {
+                                result = proxiedHook(...params);
+                            } finally {
+                                deferred.resolve();
+                            }
                         }}
                     />
                 </Wrapper>
@@ -120,6 +106,12 @@ export function createTestProxy<THook extends TestHook, TProps = any>(
             }
         });
 
+        if (!wasCalled && Wrapper !== DefaultWrapper) {
+            console.warn(
+                "Check the code for your wrapper, it should render the children prop",
+            );
+        }
+
         if (caughtError) {
             throw caughtError;
         }
@@ -128,17 +120,18 @@ export function createTestProxy<THook extends TestHook, TProps = any>(
     };
 
     const control = {
+        get error() {
+            return caughtError;
+        },
         unmount: () => {
             act(() => {
                 reactTestRenderer?.unmount();
             });
         },
-        set props(newValue: TProps) {
-            wrapperProps = newValue;
+        set wrapper(newWrapper: React.ComponentType<{}> | null) {
+            Wrapper = newWrapper ?? DefaultWrapper;
         },
-        waitForNextUpdate: () => {
-            return new Promise<void>((resolve) => resolvers.push(resolve));
-        },
+        waitForNextUpdate: () => returnAct(() => deferred.promise),
     };
 
     return [render as THook, control] as const;

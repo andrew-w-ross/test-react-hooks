@@ -1,12 +1,7 @@
-import type { FC } from "react";
 import { createContext, useContext } from "react";
 import { createTestProxy } from "../createTestProxy";
 
 const TestContext = createContext(0);
-
-const Wrapper: FC<{ val: number }> = ({ val, children }) => (
-    <TestContext.Provider value={val}>{children}</TestContext.Provider>
-);
 
 it("will get the default value", () => {
     const [prxContext] = createTestProxy(useContext);
@@ -16,16 +11,30 @@ it("will get the default value", () => {
 
 it("will get the value from the above context", () => {
     const [prxContext, control] = createTestProxy(useContext, {
-        wrapper: Wrapper,
-        props: { val: 2 },
+        wrapper: ({ children }) => (
+            <TestContext.Provider value={2}>{children}</TestContext.Provider>
+        ),
     });
     {
         const res = prxContext(TestContext);
         expect(res).toBe(2);
     }
     {
-        control.props = { val: 3 };
+        control.wrapper = ({ children }) => (
+            <TestContext.Provider value={3}>{children}</TestContext.Provider>
+        );
         const res = prxContext(TestContext);
         expect(res).toBe(3);
     }
+});
+
+it("will warn if the wrapper does not pass on the children", () => {
+    const [prxContext] = createTestProxy(useContext, {
+        wrapper: () => <h1>Dont pass children</h1>,
+    });
+    const warnSpy = jest.spyOn(console, "warn");
+    prxContext(TestContext);
+    expect(warnSpy).toHaveBeenCalledWith(
+        "Check the code for your wrapper, it should render the children prop",
+    );
 });

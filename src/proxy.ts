@@ -41,6 +41,7 @@ export function createHandler(wrapFn: WrapApplyFn): ProxyHandler<any> {
                 : result;
         },
         apply(target: any, thisArg: any, argumentsList: any[]) {
+            argumentsList.forEach((arg) => wrapProxy(arg, wrapFn));
             return wrapProxy(wrapFn(target, thisArg, argumentsList), wrapFn);
         },
     };

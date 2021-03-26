@@ -6,7 +6,7 @@ const spy = jest.fn(() => spyLeave);
 
 const [prxEffect, control] = createTestProxy(useEffect);
 
-it("will call on mount", () => {
+it("will call on unmount", () => {
     prxEffect(spy, []);
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spyLeave).not.toHaveBeenCalled();
@@ -16,7 +16,7 @@ it("will call on mount", () => {
     expect(spyLeave).toHaveBeenCalledTimes(1);
 });
 
-it("will call on unmount", () => {
+it("will call on mount", () => {
     prxEffect(spy);
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spyLeave).not.toHaveBeenCalled();

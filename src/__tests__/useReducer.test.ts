@@ -19,7 +19,7 @@ function reducer(state: typeof initialState, action: Action) {
     }
 }
 
-const [prxReducer] = createTestProxy(useReducer);
+const [prxReducer, control] = createTestProxy(useReducer);
 
 it("will have initial state", () => {
     const [state] = prxReducer(reducer, initialState);
@@ -48,9 +48,12 @@ it("will handle multiple dispatches", () => {
     expect(state.count).toBe(2);
 });
 
-it("will pass back the error", () => {
+it("will catch the error", () => {
     const [, dispatch] = prxReducer(reducer, initialState);
-    expect(() => dispatch({ type: "throw" })).toThrow();
+    expect(control.error).toBeNull();
+
+    dispatch({ type: "throw" });
+    expect(control.error).toEqual(expect.objectContaining({ message: "Boom" }));
 });
 
 it("will handle lazy initialization", () => {
