@@ -1,18 +1,19 @@
 {
-  "compilerOptions": {
-    "rootDir":"./src",
-    "target": "es2018",  
-    "outDir": "dist",
-    "declaration": true,
-    "strict": true,
-    "jsx": "react-jsxdev",
-    "module": "commonjs",
-    "sourceMap": true,
-    "lib": ["esnext", "dom"],
-    "types": ["jest", "node"],    
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "Node"
-  },
-  "include": ["src/**/*"]
+    "compilerOptions": {
+        "rootDir": "./src",
+        "target": "es2018",
+        "outDir": "dist",
+        "declaration": true,
+        "strict": true,
+        "jsx": "react-jsxdev",
+        "module": "commonjs",
+        "sourceMap": true,
+        "lib": ["esnext", "dom"],
+        "types": ["jest", "node"],
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "Node",
+        "noUnusedLocals": true
+    },
+    "include": ["src/**/*"]
 }

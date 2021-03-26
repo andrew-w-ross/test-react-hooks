@@ -2,7 +2,7 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
-    "tasks": [      
+    "tasks": [
         {
             "type": "npm",
             "script": "build:babel",
@@ -11,16 +11,12 @@
         {
             "type": "npm",
             "script": "build:tsc",
-            "problemMatcher": [
-                "$tsc"
-            ]
+            "problemMatcher": ["$tsc"]
         },
         {
             "type": "npm",
             "script": "check",
-            "problemMatcher": [
-                "$eslint-compact"
-            ],
+            "problemMatcher": ["$eslint-compact"],
             "label": "npm: check",
             "detail": "eslint src/**/*.{ts,tsx}"
         }
