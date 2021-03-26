@@ -3,7 +3,7 @@ import { createTestProxy } from "../createTestProxy";
 
 const initialState = { count: 0 };
 type Action = {
-  type: "increment" | "decrement";
+  type: "increment" | "decrement" | "throw";
 };
 
 function reducer(state: typeof initialState, action: Action) {
@@ -12,8 +12,10 @@ function reducer(state: typeof initialState, action: Action) {
       return { count: state.count + 1 };
     case "decrement":
       return { count: state.count - 1 };
+    case "throw":
+      throw new Error('Boom');
     default:
-      throw new Error();
+      return state;
   }
 }
 
@@ -47,9 +49,8 @@ it("will handle multiple dispatches", () => {
 });
 
 it("will pass back the error", () => {
-  const [, dispatch] = prxReducer(reducer, initialState);
-  //@ts-ignore
-  expect(() => dispatch({ type: "foo" })).toThrow();
+  const [, dispatch] = prxReducer(reducer, initialState);  
+  expect(() => dispatch({ type: "throw" })).toThrow();
 });
 
 it("will handle lazy initialization", () => {

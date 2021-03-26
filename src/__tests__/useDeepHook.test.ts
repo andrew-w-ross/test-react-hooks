@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createTestProxy } from "..";
+import { createTestProxy } from "../createTestProxy";
 
 function useDeepHook() {
   const [count, setCount] = useState(0);

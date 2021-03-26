@@ -1,4 +1,5 @@
-import React, { createContext, useContext, FC } from "react";
+import type { FC } from "react";
+import { createContext, useContext } from "react";
 import { createTestProxy } from "../createTestProxy";
 
 const TestContext = createContext(0);

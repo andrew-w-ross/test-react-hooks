@@ -1,12 +1,14 @@
-import { wrapProxy, WrapFn } from "../proxy";
+import type { WrapApplyFn } from "../proxy";
+import { wrapProxy } from "../proxy";
 
-const wrapFn: WrapFn = jest.fn((_target, cb) => {
-  cb();
+const wrapFn: WrapApplyFn = jest.fn((target, thisArg, args) => {
+  return Reflect.apply(target, thisArg, args);
 });
 
 it("will ignore strings", () => {
   const value = "foo";
   const proxy = wrapProxy(value, wrapFn);
+
   expect(proxy).toBe(value);
   expect(wrapFn).not.toBeCalled();
 });
@@ -14,6 +16,7 @@ it("will ignore strings", () => {
 it("will ignore booleans", () => {
   const value = true;
   const proxy = wrapProxy(value, wrapFn);
+
   expect(proxy).toBe(value);
   expect(wrapFn).not.toBeCalled();
 });
@@ -21,15 +24,25 @@ it("will ignore booleans", () => {
 it("will ignore dates", () => {
   const value = new Date("2019-01-12 22:12:12");
   const proxy = wrapProxy(value, wrapFn);
+
   expect(proxy).toBe(value);
   expect(wrapFn).not.toBeCalled();
 });
 
-it("will ignore promises", async () => {
+it("will wrap promises", async () => {
   const value = Promise.resolve(12);
   const proxy = wrapProxy(value, wrapFn);
-  expect(proxy).toBe(value);
-  expect(wrapFn).not.toBeCalled();
+
+  expect(proxy).resolves.toBe(12);  
+});
+
+it('will apply on promises with functions', async () => {
+  const resolveObj = { calling: jest.fn()};  
+  const value = Promise.resolve(resolveObj);  
+  const proxy = wrapProxy(value, wrapFn);
+
+  await proxy.then(v => v.calling());
+  expect(wrapFn).toHaveBeenCalledTimes(1)
 });
 
 it("will wrap functions", () => {

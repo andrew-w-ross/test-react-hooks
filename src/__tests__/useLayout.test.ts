@@ -1,4 +1,4 @@
-import { createTestProxy } from "../";
+import { createTestProxy } from "../createTestProxy";
 import { useLayoutEffect } from "react";
 
 const spyLeave = jest.fn();

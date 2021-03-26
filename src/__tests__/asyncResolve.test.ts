@@ -1,11 +1,13 @@
+import type { DependencyList } from "react";
 import { useEffect, useRef, useCallback } from "react";
 import { createTestProxy } from "../";
 
-function useResolveOnChange(deps: any[] = []) {
+function useResolveOnChange(deps: DependencyList = []) {
   const resolveRefs = useRef<Function[]>([]);
 
   useEffect(() => {
     resolveRefs.current.splice(0).forEach(r => r(...deps));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   const addResolve = useCallback(() => {

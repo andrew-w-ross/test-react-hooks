@@ -1,9 +1,7 @@
 function isPrimitive(value: any) {
   if (value == null) return true;
 
-  if (value instanceof Date) return true;
-
-  if (value instanceof Promise) return true;
+  if (value instanceof Date) return true;  
 
   return typeof value !== "function" && typeof value !== "object";
 }
@@ -11,15 +9,21 @@ function isPrimitive(value: any) {
 /**
  * Describes a function that will take a target and then have a callback that does something to the target
  */
-export type WrapFn = (target: any, cb: () => void) => any;
+export type WrapApplyFn = (target: any, thisArg: any, argumentsList: any[]) => any;
 
-export function wrapProxy<T>(target: T, wrapFn: WrapFn): T {
+export function wrapProxy<T>(target: T, wrapFn: WrapApplyFn): T {
+  //TODO : Good place to add a recursion check
+  if (target instanceof Promise){
+    //@ts-expect-error
+    return target.then(result => wrapProxy(result, wrapFn));    
+  }
+
   return isPrimitive(target)
     ? target
     : new Proxy(target, createHandler(wrapFn));
 }
 
-export function createHandler(wrapFn: WrapFn): ProxyHandler<any> {
+export function createHandler(wrapFn: WrapApplyFn): ProxyHandler<any> {
   return {
     get(target: any, property: any, receiver: any) {
       const descriptor = Reflect.getOwnPropertyDescriptor(target, property);
@@ -29,12 +33,8 @@ export function createHandler(wrapFn: WrapFn): ProxyHandler<any> {
         ? wrapProxy(result, wrapFn)
         : result;
     },
-    apply(target: any, thisArg: any, argumentsList: any) {
-      let result;
-      wrapFn(target, () => {
-        result = Reflect.apply(target, thisArg, argumentsList);
-      });
-      return wrapProxy(result, wrapFn);
+    apply(target: any, thisArg: any, argumentsList: any[]) {      
+      return wrapProxy(wrapFn(target, thisArg, argumentsList), wrapFn);
     }
   };
 }

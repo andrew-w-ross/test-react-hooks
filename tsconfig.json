@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "noEmit": true,
+    "rootDir":"./src",
+    "target": "es2018",  
     "outDir": "dist",
     "declaration": true,
     "strict": true,
-    "jsx": "react",
+    "jsx": "react-jsxdev",
     "module": "commonjs",
     "sourceMap": true,
     "lib": ["esnext", "dom"],
-    "types": ["jest", "node"],
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
+    "types": ["jest", "node"],    
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "Node"
   },
-  "include": ["src/**/*", "setup.ts"]
+  "include": ["src/**/*"]
 }

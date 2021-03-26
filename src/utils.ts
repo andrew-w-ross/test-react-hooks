@@ -1,41 +1,21 @@
-import { act } from "react-dom/test-utils";
-import ReactDOM from "react-dom";
+import { act } from "react-test-renderer";
 
-const TEST_ID = "__useTests_hook_component";
-
-function getTestNodes(): HTMLElement[] {
-  const nodes = Array.from(document.querySelectorAll(`#${TEST_ID}`));
-  if (nodes.length > 1) {
-    console.error(
-      "More than one node found in cleanup, ensure cleanup is called after every test"
-    );
-  }
-  return nodes as HTMLElement[];
+export function randomNumber(){
+    return Date.now() + Math.floor(Math.random() * 100000);
 }
 
-/**
- * Function to be called after your tests to cleanup the container created
- *
- * @export
- */
-export function cleanUp() {
-  getTestNodes().forEach(n => {
-    unmount(n);
-    n.remove();
-  });
-}
+const NO_RESULT = Symbol("NO_RESULT");
 
-export function unmount(node = getContainer()) {
-  act(() => {
-    ReactDOM.unmountComponentAtNode(node);
-  });
-}
+export function returnAct<TResult>(actFn:() => TResult) : TResult{
+    let result: typeof NO_RESULT | TResult = NO_RESULT;
 
-export function getContainer() {
-  let [container] = getTestNodes();
-  if (container != null) return container;
-  container = document.createElement("div");
-  container.id = TEST_ID;
-  document.body.appendChild(container);
-  return container;
+    act(() => {
+        result = actFn();        
+    });
+
+    if(result === NO_RESULT){
+        throw new Error('Act was not called');
+    }
+
+    return result;
 }
