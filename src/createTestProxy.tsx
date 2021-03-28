@@ -5,6 +5,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import type { WrapApplyFn } from "./proxy";
 
 import { wrapProxy } from "./proxy";
+import type { CreateDeferredOptions } from "./utils";
 import { createDeferred, returnAct } from "./utils";
 import { CallbackComponent } from "./CallbackComponent";
 
@@ -26,19 +27,12 @@ const DefaultWrapper: FC = ({ children }) => <>{children}</>;
 const wrapApplyAct: WrapApplyFn = (...args) =>
     returnAct(() => Reflect.apply(...args));
 
-/**
- * Options for createTestProxy
- *
- * @export
- * @interface UseProxyOptions
- * @template TProps
- */
-export interface UseProxyOptions {
+export type UseProxyOptions = CreateDeferredOptions & {
     /**
      * Component to wrap the test component in
      */
     wrapper?: React.ComponentType<{}>;
-}
+};
 
 /**
  * Creates a proxy hook and a control object for that hook
@@ -54,7 +48,7 @@ export interface UseProxyOptions {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    options: UseProxyOptions = {},
+    options: UseProxyOptions = { throttleTimeout: 1 },
 ) {
     let { wrapper: Wrapper = DefaultWrapper } = options;
     let reactTestRenderer: ReactTestRenderer | null = null;
@@ -62,7 +56,7 @@ export function createTestProxy<THook extends TestHook>(
     let caughtError: Error | null = null;
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
 
-    const deferred = createDeferred();
+    const deferredUpdate = createDeferred(options);
 
     function cleanup() {
         act(() => {
@@ -89,7 +83,7 @@ export function createTestProxy<THook extends TestHook>(
                             try {
                                 result = proxiedHook(...params);
                             } finally {
-                                deferred.resolve();
+                                deferredUpdate.resolve();
                             }
                         }}
                     />
@@ -131,7 +125,10 @@ export function createTestProxy<THook extends TestHook>(
         set wrapper(newWrapper: React.ComponentType<{}> | null) {
             Wrapper = newWrapper ?? DefaultWrapper;
         },
-        waitForNextUpdate: () => returnAct(() => deferred.promise),
+        waitForNextUpdate: () =>
+            act(async () => {
+                await deferredUpdate.promise;
+            }),
     };
 
     return [render as THook, control] as const;

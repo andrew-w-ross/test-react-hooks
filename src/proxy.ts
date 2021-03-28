@@ -1,3 +1,5 @@
+import { isPromiseLike } from "./utils";
+
 function isPrimitive(value: any) {
     if (value == null) return true;
 
@@ -17,7 +19,7 @@ export type WrapApplyFn = (
 
 export function wrapProxy<T>(target: T, wrapFn: WrapApplyFn): T {
     //TODO : Good place to add a recursion check
-    if (target instanceof Promise) {
+    if (isPromiseLike(target)) {
         //@ts-expect-error
         return target.then((result) => wrapProxy(result, wrapFn));
     }

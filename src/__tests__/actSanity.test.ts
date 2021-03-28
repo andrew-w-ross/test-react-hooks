@@ -49,3 +49,16 @@ it("will not return the result of the inner function", async () => {
     const result = act(() => 1);
     await expect(result).resolves.toBeUndefined();
 });
+
+it("gives an error if not awaited", async () => {
+    const errorSpy = spyOn(console, "error");
+    const actResult = act(() => Promise.resolve(undefined));
+
+    await testWait();
+    expect(errorSpy).toBeCalledWith(
+        expect.stringContaining(
+            "You called act(async () => ...) without await",
+        ),
+    );
+    await expect(actResult).resolves.toBeUndefined();
+});
