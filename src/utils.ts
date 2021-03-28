@@ -28,22 +28,32 @@ export type WaiterFunction<TArgs extends any[] = []> = (
     ...args: TArgs
 ) => Promise<any>;
 
+export type Deferred<T = void> = {
+    readonly listenerCount: number;
+    resolve: (value: T | PromiseLike<T>) => void;
+    reject: (reason?: any) => void;
+    readonly promise: Promise<T>;
+};
+
 /**
  * Creates a deferred object with the promise, reject and resolve value.
  * Will reset the internal state whenever a resolve or reject occures
+ * @param throttleTime time to wait for resolves calls to stop before resolving the promise
  */
-export function createDeferred<T = void>(
-    throllteFn: WaiterFunction | null = () => wait(2),
-) {
+export function createDeferred<T = void>(throttleTime?: number | null) {
     let internalPromise = (Promise.resolve() as unknown) as Promise<T>;
     let listenerCount = 0;
 
-    const result = {
+    const result: Deferred<T> = {
         get listenerCount() {
             return listenerCount;
         },
-        resolve: (_value: T | PromiseLike<T>) => {},
-        reject: (_reason?: any) => {},
+        resolve: () => {
+            throw new Error("Init was not called");
+        },
+        reject: () => {
+            throw new Error("Init was not called");
+        },
         get promise() {
             listenerCount++;
             return internalPromise;
@@ -53,7 +63,9 @@ export function createDeferred<T = void>(
     function reset() {
         internalPromise = new Promise<T>((resolve, reject) => {
             result.resolve =
-                throllteFn == null ? resolve : throttleFn(resolve, throllteFn);
+                throttleTime == null
+                    ? resolve
+                    : throttleFn(resolve, throttleTime);
 
             result.reject = reject;
             listenerCount = 0;
@@ -67,19 +79,23 @@ export function createDeferred<T = void>(
 
 export function throttleFn<TArgs extends any[]>(
     fn: (...args: TArgs) => any,
-    waitFn: (...args: TArgs) => Promise<void> = () => wait(2),
+    throttleTime: number,
 ) {
-    let callId = 0;
+    let timerHandle: any = null;
 
     return async (...args: TArgs) => {
-        //What is the external id vs this call id?
-        const applyId = ++callId;
-        await waitFn(...args);
-        if (applyId === callId) {
-            fn(...args);
+        if (timerHandle != null) {
+            clearTimeout(timerHandle);
+            timerHandle = null;
         }
+
+        timerHandle = setTimeout(() => {
+            fn(...args);
+        }, throttleTime);
     };
 }
 
 export const wait = (ms = 1) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+export const noOp = () => {};

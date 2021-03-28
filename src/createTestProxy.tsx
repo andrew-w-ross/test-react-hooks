@@ -5,8 +5,7 @@ import { CallbackComponent } from "./CallbackComponent";
 import { ErrorBoundary } from "./ErrorBoundary";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
-import type { WaiterFunction } from "./utils";
-import { createDeferred, returnAct } from "./utils";
+import { createDeferred, isPromiseLike, noOp, returnAct } from "./utils";
 
 export type TestHook = (...args: any[]) => any;
 
@@ -31,7 +30,22 @@ export type UseProxyOptions = {
      * Component to wrap the test component in
      */
     wrapper?: React.ComponentType<{}>;
-    throttleFn?: WaiterFunction | null;
+    throttleTime?: null | number;
+};
+
+export type WaitForNextUpdateOptions = {
+    /**
+     * Function to call inside of act, use this if you need to affect the hook to cause the next update
+     */
+    //Type is Promise<any> as a hint
+    actFn?: () => Promise<any> | any;
+
+    /**
+     * Function to run after the act run but hasn't been awaited next.
+     * Generally used to run fake timers, after @see `act` has been called.
+     * Using @see `waitForNextUpdate` with no flushing of the event loop will always timeout the test.
+     */
+    postAct?: (() => void) | null;
 };
 
 /**
@@ -48,24 +62,24 @@ export type UseProxyOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { throttleFn, wrapper }: UseProxyOptions = {},
+    { throttleTime, wrapper }: UseProxyOptions = {},
 ) {
     let Wrapper = wrapper ?? DefaultWrapper;
     let reactTestRenderer: ReactTestRenderer | null = null;
     let result: ReturnType<TestHook> | undefined = undefined;
     let caughtError: Error | null = null;
+
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
+    const deferredUpdate = createDeferred(throttleTime);
 
-    const deferredUpdate = createDeferred(throttleFn);
-
-    function cleanup() {
+    const cleanup = () => {
         act(() => {
             if (reactTestRenderer) {
                 reactTestRenderer.unmount();
             }
         });
         reactTestRenderer = null;
-    }
+    };
 
     const render = (...params: Parameters<THook>) => {
         let wasCalled = false;
@@ -125,11 +139,24 @@ export function createTestProxy<THook extends TestHook>(
         set wrapper(newWrapper: React.ComponentType<{}> | null) {
             Wrapper = newWrapper ?? DefaultWrapper;
         },
-        waitForNextUpdate: (actFn: () => any = () => {}) =>
-            act(async () => {
-                await actFn();
-                await deferredUpdate.promise;
-            }),
+        waitForNextUpdate: ({
+            actFn = noOp,
+            postAct,
+        }: WaitForNextUpdateOptions = {}) => {
+            //@ts-expect-error overloads kinda break here
+            const actResult = act(() => {
+                //Don't try to clean this up by making this function async, it'll just break everything.
+                const actResult = actFn();
+
+                return isPromiseLike(actResult)
+                    ? actResult.then(() => deferredUpdate.promise)
+                    : deferredUpdate.promise;
+            });
+
+            postAct?.();
+
+            return actResult;
+        },
     };
 
     return [render as THook, control] as const;

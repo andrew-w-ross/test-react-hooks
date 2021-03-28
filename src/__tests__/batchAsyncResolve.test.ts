@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createTestProxy } from "../createTestProxy";
 import { wait } from "../utils";
 
+//Use real timers here, this library doesn't assume jest as a runner
 function useBatchAsync(ms = 1) {
     const [value, setValue] = useState(0);
 
@@ -42,7 +43,7 @@ it("by default will wait for 2ms to pass before resoving", async () => {
 
 it("can be turned off for all updates by setting throttleTimeout to null", async () => {
     const [prxBatchAsync, control] = createTestProxy(useBatchAsync, {
-        throttleFn: null,
+        throttleTime: null,
     });
 
     {
@@ -60,8 +61,8 @@ it("can be turned off for all updates by setting throttleTimeout to null", async
     await control.waitForNextUpdate();
 
     {
+        expect(errorSpy).not.toHaveBeenCalled();
         const value = prxBatchAsync();
         expect(value).toBe(2);
     }
-    expect(errorSpy).not.toHaveBeenCalled();
 });

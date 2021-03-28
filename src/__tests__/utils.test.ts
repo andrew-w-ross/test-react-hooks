@@ -13,7 +13,7 @@ describe("returnAct", () => {
 
 describe("createDeferred", () => {
     beforeEach(() => {
-        jest.useFakeTimers("modern");
+        jest.useFakeTimers();
     });
 
     afterEach(() => {
