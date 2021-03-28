@@ -19,6 +19,7 @@ function reducer(state: typeof initialState, action: Action) {
     }
 }
 
+const errorSpy = jest.spyOn(console, "error");
 const [prxReducer, control] = createTestProxy(useReducer);
 
 it("will have initial state", () => {
@@ -54,6 +55,9 @@ it("will catch the error", () => {
 
     dispatch({ type: "throw" });
     expect(control.error).toEqual(expect.objectContaining({ message: "Boom" }));
+    expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("The above error occurred in the"),
+    );
 });
 
 it("will handle lazy initialization", () => {

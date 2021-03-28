@@ -7,6 +7,8 @@ const ThrowComponent = () => {
     throw error;
 };
 
+const errorSpy = jest.spyOn(console, "error");
+
 it(`render's content`, () => {
     const testRenderer = create(
         <ErrorBoundary>
@@ -29,4 +31,7 @@ it(`will render nothing on error`, () => {
 
     expect(onError).toHaveBeenCalledWith(error);
     expect(testRenderer.root.findAllByType("h1")).toHaveLength(0);
+    expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("The above error occurred in the"),
+    );
 });

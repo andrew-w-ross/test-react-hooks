@@ -12,9 +12,21 @@ describe("returnAct", () => {
 });
 
 describe("createDeferred", () => {
+    beforeEach(() => {
+        jest.useFakeTimers("modern");
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+        jest.runOnlyPendingTimers();
+    });
+
     it("will resolve a value", async () => {
         const deferred = createDeferred<number>();
+
         deferred.resolve(1);
+        jest.runOnlyPendingTimers();
+
         await expect(deferred.promise).resolves.toEqual(1);
     });
 
@@ -28,9 +40,11 @@ describe("createDeferred", () => {
         const deferred = createDeferred<number>();
 
         deferred.resolve(1);
+        jest.runOnlyPendingTimers();
         await expect(deferred.promise).resolves.toEqual(1);
 
         deferred.resolve(2);
+        jest.runOnlyPendingTimers();
         await expect(deferred.promise).resolves.toEqual(2);
     });
 
@@ -42,5 +56,25 @@ describe("createDeferred", () => {
 
         deferred.reject(new Error("second error"));
         await expect(deferred.promise).rejects.toThrow("second error");
+    });
+
+    it("by default will throttle for 2ms", async () => {
+        const resolveSpy = jest.fn();
+        const deferred = createDeferred<number>();
+        deferred.promise.then(resolveSpy);
+
+        expect(resolveSpy).not.toHaveBeenCalled();
+
+        deferred.resolve(1);
+        jest.advanceTimersByTime(1);
+        expect(resolveSpy).not.toHaveBeenCalled();
+
+        deferred.resolve(1);
+        jest.advanceTimersByTime(1);
+        expect(resolveSpy).not.toHaveBeenCalled();
+
+        jest.advanceTimersByTime(1);
+        await deferred.promise;
+        expect(resolveSpy).toHaveBeenCalledWith(1);
     });
 });

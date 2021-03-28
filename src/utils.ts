@@ -24,17 +24,17 @@ export function returnAct<TResult>(actFn: () => TResult): TResult {
     return result;
 }
 
-export type CreateDeferredOptions = {
-    throttleTimeout?: number | null;
-};
+export type WaiterFunction<TArgs extends any[] = []> = (
+    ...args: TArgs
+) => Promise<any>;
 
 /**
  * Creates a deferred object with the promise, reject and resolve value.
  * Will reset the internal state whenever a resolve or reject occures
  */
-export function createDeferred<T = void>({
-    throttleTimeout,
-}: CreateDeferredOptions = {}) {
+export function createDeferred<T = void>(
+    throllteFn: WaiterFunction | null = () => wait(2),
+) {
     let internalPromise = (Promise.resolve() as unknown) as Promise<T>;
     let listenerCount = 0;
 
@@ -53,9 +53,7 @@ export function createDeferred<T = void>({
     function reset() {
         internalPromise = new Promise<T>((resolve, reject) => {
             result.resolve =
-                throttleTimeout == null
-                    ? resolve
-                    : throttleFn(resolve, throttleTimeout);
+                throllteFn == null ? resolve : throttleFn(resolve, throllteFn);
 
             result.reject = reject;
             listenerCount = 0;
@@ -69,17 +67,19 @@ export function createDeferred<T = void>({
 
 export function throttleFn<TArgs extends any[]>(
     fn: (...args: TArgs) => any,
-    ms = 2,
+    waitFn: (...args: TArgs) => Promise<void> = () => wait(2),
 ) {
-    let timeout: null | number = null;
+    let callId = 0;
 
-    return (...args: TArgs) => {
-        if (timeout != null) {
-            clearTimeout(timeout);
-        }
-
-        timeout = (setTimeout(() => {
+    return async (...args: TArgs) => {
+        //What is the external id vs this call id?
+        const applyId = ++callId;
+        await waitFn(...args);
+        if (applyId === callId) {
             fn(...args);
-        }, ms) as unknown) as number;
+        }
     };
 }
+
+export const wait = (ms = 1) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms));

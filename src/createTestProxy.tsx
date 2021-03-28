@@ -1,13 +1,12 @@
 import type { FC } from "react";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { act, create } from "react-test-renderer";
+import { CallbackComponent } from "./CallbackComponent";
 import { ErrorBoundary } from "./ErrorBoundary";
 import type { WrapApplyFn } from "./proxy";
-
 import { wrapProxy } from "./proxy";
-import type { CreateDeferredOptions } from "./utils";
+import type { WaiterFunction } from "./utils";
 import { createDeferred, returnAct } from "./utils";
-import { CallbackComponent } from "./CallbackComponent";
 
 export type TestHook = (...args: any[]) => any;
 
@@ -27,11 +26,12 @@ const DefaultWrapper: FC = ({ children }) => <>{children}</>;
 const wrapApplyAct: WrapApplyFn = (...args) =>
     returnAct(() => Reflect.apply(...args));
 
-export type UseProxyOptions = CreateDeferredOptions & {
+export type UseProxyOptions = {
     /**
      * Component to wrap the test component in
      */
     wrapper?: React.ComponentType<{}>;
+    throttleFn?: WaiterFunction | null;
 };
 
 /**
@@ -48,15 +48,15 @@ export type UseProxyOptions = CreateDeferredOptions & {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    options: UseProxyOptions = { throttleTimeout: 1 },
+    { throttleFn, wrapper }: UseProxyOptions = {},
 ) {
-    let { wrapper: Wrapper = DefaultWrapper } = options;
+    let Wrapper = wrapper ?? DefaultWrapper;
     let reactTestRenderer: ReactTestRenderer | null = null;
     let result: ReturnType<TestHook> | undefined = undefined;
     let caughtError: Error | null = null;
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
 
-    const deferredUpdate = createDeferred(options);
+    const deferredUpdate = createDeferred(throttleFn);
 
     function cleanup() {
         act(() => {
@@ -125,8 +125,9 @@ export function createTestProxy<THook extends TestHook>(
         set wrapper(newWrapper: React.ComponentType<{}> | null) {
             Wrapper = newWrapper ?? DefaultWrapper;
         },
-        waitForNextUpdate: () =>
+        waitForNextUpdate: (actFn: () => any = () => {}) =>
             act(async () => {
+                await actFn();
                 await deferredUpdate.promise;
             }),
     };
