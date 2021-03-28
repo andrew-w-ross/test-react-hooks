@@ -62,7 +62,7 @@ export type WaitForNextUpdateOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { throttleTime, wrapper }: UseProxyOptions = {},
+    { throttleTime = 2, wrapper }: UseProxyOptions = {},
 ) {
     let Wrapper = wrapper ?? DefaultWrapper;
     let reactTestRenderer: ReactTestRenderer | null = null;
