@@ -5,7 +5,8 @@ import { CallbackComponent } from "./CallbackComponent";
 import { ErrorBoundary } from "./ErrorBoundary";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
-import { createDeferred, isPromiseLike, noOp, returnAct } from "./utils";
+import { returnAct } from "./utils";
+import { createWaitForNextUpdate } from "./updateWaiter";
 
 export type TestHook = (...args: any[]) => any;
 
@@ -30,22 +31,6 @@ export type UseProxyOptions = {
      * Component to wrap the test component in
      */
     wrapper?: React.ComponentType<{}>;
-    throttleTime?: null | number;
-};
-
-export type WaitForNextUpdateOptions = {
-    /**
-     * Function to call inside of act, use this if you need to affect the hook to cause the next update
-     */
-    //Type is Promise<any> as a hint
-    actFn?: () => Promise<any> | any;
-
-    /**
-     * Function to run after the act run but hasn't been awaited next.
-     * Generally used to run fake timers, after @see `act` has been called.
-     * Using @see `waitForNextUpdate` with no flushing of the event loop will always timeout the test.
-     */
-    postAct?: (() => void) | null;
 };
 
 /**
@@ -62,17 +47,19 @@ export type WaitForNextUpdateOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { throttleTime = 2, wrapper }: UseProxyOptions = {},
+    { wrapper }: UseProxyOptions = {},
 ) {
     let Wrapper = wrapper ?? DefaultWrapper;
     let reactTestRenderer: ReactTestRenderer | null = null;
+
     let result: ReturnType<TestHook> | undefined = undefined;
     let caughtError: Error | null = null;
 
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
-    const deferredUpdate = createDeferred(throttleTime);
+    const { updateSubject, waitForNextUpdate } = createWaitForNextUpdate();
 
     const cleanup = () => {
+        updateSubject.cleanUp();
         act(() => {
             if (reactTestRenderer) {
                 reactTestRenderer.unmount();
@@ -88,16 +75,17 @@ export function createTestProxy<THook extends TestHook>(
             <ErrorBoundary
                 onError={(error) => {
                     caughtError = error;
+                    updateSubject.next({ error });
                 }}
             >
                 <Wrapper>
                     <CallbackComponent
                         callback={() => {
-                            wasCalled = true;
                             try {
                                 result = proxiedHook(...params);
                             } finally {
-                                deferredUpdate.resolve();
+                                wasCalled = true;
+                                updateSubject.next({ async: wasCalled });
                             }
                         }}
                     />
@@ -139,24 +127,7 @@ export function createTestProxy<THook extends TestHook>(
         set wrapper(newWrapper: React.ComponentType<{}> | null) {
             Wrapper = newWrapper ?? DefaultWrapper;
         },
-        waitForNextUpdate: ({
-            actFn = noOp,
-            postAct,
-        }: WaitForNextUpdateOptions = {}) => {
-            //@ts-expect-error overloads kinda break here
-            const actResult = act(() => {
-                //Don't try to clean this up by making this function async, it'll just break everything.
-                const actResult = actFn();
-
-                return isPromiseLike(actResult)
-                    ? actResult.then(() => deferredUpdate.promise)
-                    : deferredUpdate.promise;
-            });
-
-            postAct?.();
-
-            return actResult;
-        },
+        waitForNextUpdate,
     };
 
     return [render as THook, control] as const;

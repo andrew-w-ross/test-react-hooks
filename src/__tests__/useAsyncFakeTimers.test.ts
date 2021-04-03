@@ -17,119 +17,54 @@ function useWaits() {
 //If we failed to wrap async changes in act then it complains, just watching to make sure that didn't happen.
 const errorSpy = jest.spyOn(console, "error");
 
+beforeEach(() => {
+    jest.useFakeTimers("modern");
+});
+
 afterEach(() => {
-    jest.runOnlyPendingTimers();
     jest.useRealTimers();
 });
 
-describe("modern", () => {
-    beforeEach(() => {
-        jest.useFakeTimers("modern");
-    });
+it("can use proxy timer in waiter fn", async () => {
+    const [prxWaits, control] = createTestProxy(useWaits);
 
-    it("can use proxy timer in waiter fn", async () => {
-        const [prxWaits, control] = createTestProxy(useWaits);
+    {
+        const value = prxWaits();
+        expect(value).toBe(0);
+    }
 
-        {
-            const value = prxWaits();
-            expect(value).toBe(0);
-        }
+    await control.waitForNextUpdate(() => jest.advanceTimersByTime(2));
 
-        await control.waitForNextUpdate({
-            postAct: () => jest.advanceTimersByTime(2),
-        });
+    {
+        const value = prxWaits();
+        expect(value).toBe(1);
+    }
 
-        {
-            const value = prxWaits();
-            expect(value).toBe(1);
-        }
+    await control.waitForNextUpdate(() => jest.advanceTimersByTime(10));
 
-        await control.waitForNextUpdate({
-            postAct: () => jest.advanceTimersByTime(10),
-        });
+    {
+        const value = prxWaits();
+        expect(value).toBe(10);
+    }
 
-        {
-            const value = prxWaits();
-            expect(value).toBe(10);
-        }
-
-        expect(errorSpy).not.toHaveBeenCalled();
-    });
-
-    it("running all pending timers will skip to the end", async () => {
-        const [prxWaits, control] = createTestProxy(useWaits);
-
-        {
-            const value = prxWaits();
-            expect(value).toBe(0);
-        }
-
-        await control.waitForNextUpdate({
-            postAct: () => {
-                jest.runOnlyPendingTimers();
-            },
-        });
-
-        {
-            const value = prxWaits();
-            expect(value).toBe(100);
-        }
-        expect(errorSpy).not.toHaveBeenCalled();
-    });
+    expect(errorSpy).not.toHaveBeenCalled();
 });
 
-describe("legacy", () => {
-    beforeEach(() => {
-        jest.useFakeTimers("legacy");
+it("running all pending timers will skip to the end", async () => {
+    const [prxWaits, control] = createTestProxy(useWaits, {
+        throttleTime: null,
     });
 
-    it("can use proxy timer in waiter fn", async () => {
-        const [prxWaits, control] = createTestProxy(useWaits);
+    {
+        const value = prxWaits();
+        expect(value).toBe(0);
+    }
 
-        {
-            const value = prxWaits();
-            expect(value).toBe(0);
-        }
+    await control.waitForNextUpdate(() => jest.advanceTimersByTime(3));
 
-        await control.waitForNextUpdate({
-            postAct: () => jest.advanceTimersByTime(2),
-        });
-
-        {
-            const value = prxWaits();
-            expect(value).toBe(1);
-        }
-
-        await control.waitForNextUpdate({
-            postAct: () => jest.advanceTimersByTime(10),
-        });
-
-        {
-            const value = prxWaits();
-            expect(value).toBe(10);
-        }
-
-        expect(errorSpy).not.toHaveBeenCalled();
-    });
-
-    it("running all pending timers will skip to the end", async () => {
-        const [prxWaits, control] = createTestProxy(useWaits);
-
-        {
-            const value = prxWaits();
-            expect(value).toBe(0);
-        }
-
-        await control.waitForNextUpdate({
-            postAct: () => {
-                jest.runOnlyPendingTimers();
-            },
-        });
-
-        {
-            const value = prxWaits();
-            expect(value).toBe(100);
-        }
-        expect(errorSpy).not.toHaveBeenCalled();
-    });
+    {
+        const value = prxWaits();
+        expect(value).toBe(1);
+    }
+    expect(errorSpy).not.toHaveBeenCalled();
 });

@@ -47,22 +47,32 @@ it("can be turned off for all updates by setting throttleTimeout to null", async
     });
 
     {
-        const value = prxBatchAsync(0);
+        const value = prxBatchAsync(4);
         expect(value).toBe(0);
     }
 
     await control.waitForNextUpdate();
 
     {
-        const value = prxBatchAsync();
+        const value = prxBatchAsync(4);
         expect(value).toBe(1);
+    }
+});
+
+it(`regardless of the throttleTime it'll still wait for the first change`, async () => {
+    const [prxBatchAsync, control] = createTestProxy(useBatchAsync, {
+        throttleTime: 5,
+    });
+
+    {
+        const value = prxBatchAsync(10);
+        expect(value).toBe(0);
     }
 
     await control.waitForNextUpdate();
 
     {
-        expect(errorSpy).not.toHaveBeenCalled();
-        const value = prxBatchAsync();
-        expect(value).toBe(2);
+        const value = prxBatchAsync(10);
+        expect(value).toBe(1);
     }
 });

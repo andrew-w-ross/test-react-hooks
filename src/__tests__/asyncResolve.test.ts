@@ -29,9 +29,8 @@ it("should not resolve if the same value is passed in", async () => {
     }
     expect(spy).not.toHaveBeenCalled();
     {
-        const updatePromise = control.waitForNextUpdate();
         prxResolveOnChange([2]);
-        await updatePromise;
+        await control.waitForNextUpdate();
     }
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledWith(2);

@@ -53,12 +53,16 @@
             "<rootDir>/src/"
         ],
         "testEnvironment": "node",
-        "testTimeout": 500
+        "testTimeout": 500,
+        "silent": true
     },
     "keywords": [
         "react",
         "hooks",
         "testing",
         "react-hooks"
-    ]
+    ],
+    "dependencies": {
+        "zen-observable": "^0.8.15"
+    }
 }
