@@ -1,5 +1,5 @@
-import { combineLatest, NEVER, race, Subject, zip } from "rxjs";
-import { bufferCount, debounceTime, take } from "rxjs/operators";
+import { Subject } from "rxjs";
+import { debounceTime, take } from "rxjs/operators";
 
 /**
  * This sanity check file in general might seem a bit silly but there is a lot
@@ -88,24 +88,4 @@ it("debounceTime in modern timers needs an await to resolve", async () => {
 
     await undefined;
     expect(resolveSpy).toHaveBeenCalledWith(5);
-});
-
-it("will do some stuff", () => {
-    const valueSpy = jest.fn();
-    const errorSpy = jest.fn();
-    const completeSpy = jest.fn();
-
-    const countObs = subject.asObservable().pipe(bufferCount(2));
-
-    const obs = race(combineLatest([countObs]), NEVER).pipe(take(1));
-
-    obs.subscribe(valueSpy, errorSpy, completeSpy);
-
-    expect(valueSpy).not.toHaveBeenCalledWith();
-
-    subject.next(1);
-    subject.next(2);
-
-    expect(valueSpy).toHaveBeenCalledTimes(1);
-    expect(completeSpy).toHaveBeenCalled();
 });

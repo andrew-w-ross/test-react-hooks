@@ -74,21 +74,3 @@ it("will throw if an error occures during act", async () => {
 
     await expect(updateWait).rejects.toEqual(error);
 });
-
-// it("will swallow erros if asked", async () => {
-//     const rejectSpy = jest.fn();
-//     const resolveSpy = jest.fn();
-//     const { updateSubject, waitForNextUpdate } = createWaitForNextUpdate();
-//     waitForNextUpdate()
-//         .updateCount(1)
-//         .swallowErrors()
-//         .then(resolveSpy, rejectSpy);
-
-//     await updateSubject.next({ error: new Error("boom") });
-//     expect(rejectSpy).not.toHaveBeenCalled();
-//     expect(resolveSpy).not.toHaveBeenCalled();
-
-//     await updateSubject.next({ async: true });
-//     expect(rejectSpy).not.toHaveBeenCalled();
-//     expect(resolveSpy).toHaveBeenCalled();
-// });

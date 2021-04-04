@@ -1,15 +1,18 @@
 import { act } from "react-test-renderer";
-import type { Observable, SubscribableOrPromise } from "rxjs";
+import type {
+    ConnectableObservable,
+    Observable,
+    SubscribableOrPromise,
+} from "rxjs";
 import { combineLatest, race, Subject } from "rxjs";
 import {
     bufferCount,
     debounceTime,
     filter,
     map,
+    publish,
     take,
-    tap,
 } from "rxjs/operators";
-import { noOp } from "./utils";
 
 /**
  * What wait mode to use for multiple promises, @see Promise.race or @see Promise.all
@@ -32,25 +35,32 @@ export type CustomWaitArgs = {
 };
 
 export class UpdateWaiter implements PromiseLike<void> {
-    private hasExecuted = false;
+    private updateObserver: ConnectableObservable<UpdateEvent>;
     private asyncObserver: Observable<UpdateEvent>;
     private errorObserver: Observable<void>;
     private waiters: SubscribableOrPromise<any>[] = [];
     private waitMode: WaitMode = "all";
-    private isErrorSwalling = false;
     private actFn?: () => any;
-    private postActFn: () => any = noOp;
+    private postActFn?: () => any;
+    private executePromise?: Promise<void>;
 
-    constructor(private updateObserver: Observable<UpdateEvent>) {
-        this.asyncObserver = updateObserver.pipe(
+    constructor(inputObservable: Observable<UpdateEvent>) {
+        //@ts-expect-error
+        this.updateObserver = publish()(inputObservable);
+
+        this.asyncObserver = this.updateObserver.pipe(
             filter((v) => v.async === true),
         );
-        this.errorObserver = updateObserver.pipe(
+        this.errorObserver = this.updateObserver.pipe(
             filter((v) => v.error != null),
             map((v) => {
                 throw v.error;
             }),
         );
+    }
+
+    get hasExecuted() {
+        return this.executePromise != null;
     }
 
     private checkCallState() {
@@ -75,23 +85,32 @@ export class UpdateWaiter implements PromiseLike<void> {
             .pipe(take(1))
             .toPromise();
 
+        this.updateObserver.connect();
+
         const actPromise = act(async () => {
             await this.actFn?.();
             await executePromise;
         });
 
-        this.postActFn();
+        this.postActFn?.();
         await actPromise;
     }
 
-    then<TResult1 = void, TResult2 = never>(
-        onfulfilled?:
-            | ((value: void) => TResult1 | PromiseLike<TResult1>)
-            | null,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null,
-    ): PromiseLike<TResult1 | TResult2> {
-        //This is kinda sneaky but makes this so much easier to use
-        return this.execute().then(onfulfilled, onrejected);
+    get then() {
+        //To replicate a promise start an execution before then is called.
+        //Be super careful when changing this, it matter when await is involved
+        this.executePromise = this.execute();
+        return <TResult1 = void, TResult2 = never>(
+            onfulfilled?:
+                | ((value: void) => TResult1 | PromiseLike<TResult1>)
+                | null,
+            onrejected?:
+                | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+                | null,
+        ): PromiseLike<TResult1 | TResult2> => {
+            //This is kinda sneaky but makes this so much easier to use
+            return this.executePromise!.then(onfulfilled, onrejected);
+        };
     }
 
     timerFn(fn: () => any) {
@@ -153,12 +172,6 @@ export class UpdateWaiter implements PromiseLike<void> {
         this.waitMode = "all";
         return this;
     }
-
-    swallowErrors() {
-        this.checkCallState();
-        this.isErrorSwalling = true;
-        return this;
-    }
 }
 
 /**
@@ -168,6 +181,7 @@ export class UpdateWaiter implements PromiseLike<void> {
 export function createWaitForNextUpdate() {
     const subject = new Subject<UpdateEvent>();
     const waitForNextUpdate = () => new UpdateWaiter(subject.asObservable());
+
     return {
         updateSubject: subject,
         waitForNextUpdate,
