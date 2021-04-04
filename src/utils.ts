@@ -24,7 +24,7 @@ export function returnAct<TResult>(actFn: () => TResult): TResult {
     return result;
 }
 
-export const wait = (ms = 1) =>
+export const wait = (ms = 0) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export const noOp = () => {};

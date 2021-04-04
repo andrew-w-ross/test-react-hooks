@@ -1,10 +1,18 @@
 import { act } from "react-test-renderer";
-import type Observable from "zen-observable";
-import { debounce, Subject, take, toPromise } from "./observer-utils";
+import type { Observable, SubscribableOrPromise } from "rxjs";
+import { combineLatest, race, Subject } from "rxjs";
+import {
+    bufferCount,
+    debounceTime,
+    filter,
+    map,
+    take,
+    tap,
+} from "rxjs/operators";
 import { noOp } from "./utils";
 
 /**
- * What wait mode to use for multiple promises, @see Promise.race or @Promise.all
+ * What wait mode to use for multiple promises, @see Promise.race or @see Promise.all
  */
 export type WaitMode = "race" | "all";
 
@@ -26,22 +34,23 @@ export type CustomWaitArgs = {
 export class UpdateWaiter implements PromiseLike<void> {
     private hasExecuted = false;
     private asyncObserver: Observable<UpdateEvent>;
-    private promises: Promise<any>[] = [];
+    private errorObserver: Observable<void>;
+    private waiters: SubscribableOrPromise<any>[] = [];
     private waitMode: WaitMode = "all";
     private isErrorSwalling = false;
+    private actFn?: () => any;
     private postActFn: () => any = noOp;
 
     constructor(private updateObserver: Observable<UpdateEvent>) {
-        this.asyncObserver = updateObserver.filter((v) => !!v.async);
-    }
-
-    then<TResult1 = void, TResult2 = never>(
-        onfulfilled?:
-            | ((value: void) => TResult1 | PromiseLike<TResult1>)
-            | null,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null,
-    ): PromiseLike<TResult1 | TResult2> {
-        return this.execute().then(onfulfilled, onrejected);
+        this.asyncObserver = updateObserver.pipe(
+            filter((v) => v.async === true),
+        );
+        this.errorObserver = updateObserver.pipe(
+            filter((v) => v.error != null),
+            map((v) => {
+                throw v.error;
+            }),
+        );
     }
 
     private checkCallState() {
@@ -51,78 +60,101 @@ export class UpdateWaiter implements PromiseLike<void> {
             );
     }
 
+    private async execute() {
+        //No promises added, default to debounce.
+        if (this.waiters.length === 0) {
+            this.debounce();
+        }
+
+        const waitStream =
+            this.waitMode === "all"
+                ? combineLatest(this.waiters)
+                : race(this.waiters);
+
+        const executePromise = race(this.errorObserver, waitStream)
+            .pipe(take(1))
+            .toPromise();
+
+        const actPromise = act(async () => {
+            await this.actFn?.();
+            await executePromise;
+        });
+
+        this.postActFn();
+        await actPromise;
+    }
+
+    then<TResult1 = void, TResult2 = never>(
+        onfulfilled?:
+            | ((value: void) => TResult1 | PromiseLike<TResult1>)
+            | null,
+        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null,
+    ): PromiseLike<TResult1 | TResult2> {
+        //This is kinda sneaky but makes this so much easier to use
+        return this.execute().then(onfulfilled, onrejected);
+    }
+
     timerFn(fn: () => any) {
         this.checkCallState();
         this.postActFn = fn;
         return this;
     }
 
-    private execute() {
-        //No promises added, default to debounce.
-        if (this.promises.length === 0) {
-            this.debounce();
+    act(actFn: () => any | Promise<any>) {
+        if (this.actFn != null) {
+            console.warn(
+                "actFn is already declared, overriding the current one",
+            );
         }
-
-        if (this.isErrorSwalling) {
-            this.promises = this.promises.map((p) => p.catch());
-        }
-
-        const executePromise =
-            this.waitMode === "all"
-                ? Promise.all(this.promises)
-                : Promise.race(this.promises);
-
-        const actPromise = act(() => executePromise.then(() => {}));
-        this.postActFn();
-        return actPromise;
+        this.actFn = actFn;
+        return this;
     }
 
     debounce(ms = 2): this {
         this.checkCallState();
+        const debounceObserver = this.asyncObserver.pipe(debounceTime(ms));
 
-        //Gotcha, specifically need to state first because the way toPromise works is from complete events.
-        const deboucePromise = toPromise(debounce(this.asyncObserver, ms));
-
-        this.promises.push(deboucePromise);
+        this.waiters.push(debounceObserver);
 
         return this;
     }
 
-    updateCount(count = 2): this {
+    updateCount(count = 1) {
         this.checkCallState();
+        const bufferObserver = this.asyncObserver.pipe(bufferCount(count));
 
-        const countPromise = toPromise(take(this.asyncObserver, count));
-
-        this.promises.push(countPromise);
+        this.waiters.push(bufferObserver);
 
         return this;
     }
 
-    customWait(waitFn: (waitArgs: CustomWaitArgs) => Promise<any>): this {
+    customWait(
+        waitFn: (waitArgs: CustomWaitArgs) => SubscribableOrPromise<any>,
+    ) {
         this.checkCallState();
 
         const waitArgs: CustomWaitArgs = {
             asyncObserver: this.asyncObserver,
             updateObserver: this.updateObserver,
         };
-        this.promises.push(waitFn(waitArgs));
+        this.waiters.push(waitFn(waitArgs));
 
         return this;
     }
 
-    race(): this {
+    race() {
         this.checkCallState();
         this.waitMode = "race";
         return this;
     }
 
-    all(): this {
+    all() {
         this.checkCallState();
         this.waitMode = "all";
         return this;
     }
 
-    swallowErrors(): this {
+    swallowErrors() {
         this.checkCallState();
         this.isErrorSwalling = true;
         return this;
@@ -135,9 +167,13 @@ export class UpdateWaiter implements PromiseLike<void> {
  */
 export function createWaitForNextUpdate() {
     const subject = new Subject<UpdateEvent>();
-    const waitForNextUpdate = () => new UpdateWaiter(subject.getObservable());
+    const waitForNextUpdate = () => new UpdateWaiter(subject.asObservable());
     return {
         updateSubject: subject,
         waitForNextUpdate,
+        clearSubject: () => {
+            const observers = subject.observers.splice(0);
+            observers.forEach((observer) => observer.complete());
+        },
     };
 }

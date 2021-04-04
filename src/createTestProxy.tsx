@@ -5,7 +5,7 @@ import { CallbackComponent } from "./CallbackComponent";
 import { ErrorBoundary } from "./ErrorBoundary";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
-import { returnAct } from "./utils";
+import { randomNumber, returnAct } from "./utils";
 import { createWaitForNextUpdate } from "./updateWaiter";
 
 export type TestHook = (...args: any[]) => any;
@@ -49,6 +49,7 @@ export function createTestProxy<THook extends TestHook>(
     hook: THook,
     { wrapper }: UseProxyOptions = {},
 ) {
+    let key: string | null = null;
     let Wrapper = wrapper ?? DefaultWrapper;
     let reactTestRenderer: ReactTestRenderer | null = null;
 
@@ -56,23 +57,32 @@ export function createTestProxy<THook extends TestHook>(
     let caughtError: Error | null = null;
 
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
-    const { updateSubject, waitForNextUpdate } = createWaitForNextUpdate();
+    const {
+        updateSubject,
+        waitForNextUpdate,
+        clearSubject,
+    } = createWaitForNextUpdate();
 
     const cleanup = () => {
-        updateSubject.cleanUp();
         act(() => {
             if (reactTestRenderer) {
                 reactTestRenderer.unmount();
             }
         });
         reactTestRenderer = null;
+        key = null;
+        clearSubject();
     };
 
     const render = (...params: Parameters<THook>) => {
         let wasCalled = false;
         caughtError = null;
+        if (key == null) {
+            key = randomNumber() + "";
+        }
         const element = (
             <ErrorBoundary
+                key={key}
                 onError={(error) => {
                     caughtError = error;
                     updateSubject.next({ error });
@@ -116,6 +126,9 @@ export function createTestProxy<THook extends TestHook>(
     };
 
     const control = {
+        get updateObserver() {
+            return updateSubject.asObservable();
+        },
         get error() {
             return caughtError;
         },

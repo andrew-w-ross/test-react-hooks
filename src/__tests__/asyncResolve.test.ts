@@ -1,6 +1,6 @@
 import type { DependencyList } from "react";
 import { useEffect, useRef, useCallback } from "react";
-import { createTestProxy } from "../";
+import { createTestProxy } from "../createTestProxy";
 
 function useResolveOnChange(deps: DependencyList = []) {
     const resolveRefs = useRef<Function[]>([]);
@@ -29,8 +29,9 @@ it("should not resolve if the same value is passed in", async () => {
     }
     expect(spy).not.toHaveBeenCalled();
     {
-        prxResolveOnChange([2]);
-        await control.waitForNextUpdate();
+        await control.waitForNextUpdate().act(() => {
+            prxResolveOnChange([2]);
+        });
     }
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledWith(2);

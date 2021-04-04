@@ -28,41 +28,44 @@ it("by default will wait for 2ms to pass before resoving", async () => {
     const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
     {
         const value = prxBatchAsync();
-        expect(value).toBe(0);
+        expect(value).toEqual(0);
     }
 
     await control.waitForNextUpdate();
 
     {
         const value = prxBatchAsync();
-        expect(value).toBe(2);
+        expect(value).toEqual(2);
     }
 
     expect(errorSpy).not.toHaveBeenCalled();
 });
 
-it("can be turned off for all updates by setting throttleTimeout to null", async () => {
-    const [prxBatchAsync, control] = createTestProxy(useBatchAsync, {
-        throttleTime: null,
-    });
+it("can wait for single event", async () => {
+    const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
 
     {
         const value = prxBatchAsync(4);
-        expect(value).toBe(0);
+        expect(value).toEqual(0);
     }
 
-    await control.waitForNextUpdate();
+    await control.waitForNextUpdate().updateCount(1);
 
     {
         const value = prxBatchAsync(4);
-        expect(value).toBe(1);
+        expect(value).toEqual(1);
+    }
+
+    await control.waitForNextUpdate().updateCount(1);
+
+    {
+        const value = prxBatchAsync(4);
+        expect(value).toEqual(2);
     }
 });
 
 it(`regardless of the throttleTime it'll still wait for the first change`, async () => {
-    const [prxBatchAsync, control] = createTestProxy(useBatchAsync, {
-        throttleTime: 5,
-    });
+    const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
 
     {
         const value = prxBatchAsync(10);
