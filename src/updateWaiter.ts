@@ -93,7 +93,7 @@ export class UpdateWaiter implements PromiseLike<void> {
         });
 
         this.postActFn?.();
-        await actPromise;
+        return actPromise;
     }
 
     get then() {
