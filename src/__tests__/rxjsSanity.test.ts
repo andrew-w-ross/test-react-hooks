@@ -5,8 +5,6 @@ import { debounceTime, take } from "rxjs/operators";
  * This sanity check file in general might seem a bit silly but there is a lot
  * of specific behavior that must hold true for the rest of this library to work.
  * Hopefully these tests will work as a canary in a coal mine if the behavior for rxjs changes.
- *
- * Lessons learned
  */
 
 afterEach(() => {

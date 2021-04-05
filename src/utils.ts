@@ -28,13 +28,3 @@ export const wait = (ms = 0) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export const noOp = () => {};
-
-export function removeIfExists<T>(arr: T[], value: T) {
-    const index = arr.indexOf(value);
-
-    if (index !== -1) {
-        arr.splice(index, 1);
-    }
-
-    return arr;
-}

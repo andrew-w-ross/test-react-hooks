@@ -39,7 +39,7 @@ export class UpdateWaiter implements PromiseLike<void> {
     private asyncObserver: Observable<UpdateEvent>;
     private errorObserver: Observable<void>;
     private waiters: SubscribableOrPromise<any>[] = [];
-    private waitMode: WaitMode = "all";
+    private _waitMode: WaitMode = "all";
     private actFn?: () => any;
     private postActFn?: () => any;
     private executePromise?: Promise<void>;
@@ -77,7 +77,7 @@ export class UpdateWaiter implements PromiseLike<void> {
         }
 
         const waitStream =
-            this.waitMode === "all"
+            this._waitMode === "all"
                 ? combineLatest(this.waiters)
                 : race(this.waiters);
 
@@ -98,7 +98,7 @@ export class UpdateWaiter implements PromiseLike<void> {
 
     get then() {
         //To replicate a promise start an execution before then is called.
-        //Be super careful when changing this, it matter when await is involved
+        //Be super careful when changing this, it matters when await is involved
         this.executePromise = this.execute();
         return <TResult1 = void, TResult2 = never>(
             onfulfilled?:
@@ -111,12 +111,6 @@ export class UpdateWaiter implements PromiseLike<void> {
             //This is kinda sneaky but makes this so much easier to use
             return this.executePromise!.then(onfulfilled, onrejected);
         };
-    }
-
-    timerFn(fn: () => any) {
-        this.checkCallState();
-        this.postActFn = fn;
-        return this;
     }
 
     act(actFn: () => any | Promise<any>) {
@@ -161,15 +155,10 @@ export class UpdateWaiter implements PromiseLike<void> {
         return this;
     }
 
-    race() {
+    //TODO : Test this behaviour
+    waitMode(mode: WaitMode) {
         this.checkCallState();
-        this.waitMode = "race";
-        return this;
-    }
-
-    all() {
-        this.checkCallState();
-        this.waitMode = "all";
+        this._waitMode = mode;
         return this;
     }
 }

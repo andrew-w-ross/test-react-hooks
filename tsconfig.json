@@ -10,9 +10,6 @@
         "sourceMap": true,
         "lib": ["esnext", "dom"],
         "types": ["jest", "node"],
-        "paths": {
-            "*": ["./src/@types/*"]
-        },
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "moduleResolution": "Node",
