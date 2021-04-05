@@ -64,7 +64,7 @@ it("will throw if an error is piped through", async () => {
     expect(rejectSpy).toHaveBeenCalledWith(error);
 });
 
-it.only("will throw if an error occures during act", async () => {
+xit("will throw if an error occures during act", async () => {
     const { waitForNextUpdate } = createWaitForNextUpdate();
 
     const updateWait = waitForNextUpdate().act(() => {
