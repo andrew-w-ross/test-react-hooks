@@ -27,8 +27,18 @@ const spy = jest.fn();
 
 afterEach(() => jest.clearAllMocks());
 
+const container = document.createElement("div");
+
+beforeEach(() => {
+    document.body.appendChild(container);
+});
+
+afterEach(() => {
+    container.remove();
+});
+
 it("will detect if clicked outside", () => {
-    const ref = { current: control.container };
+    const ref = { current: container };
 
     prxClickOutside(ref, spy);
     expect(spy).not.toHaveBeenCalled();
@@ -43,13 +53,13 @@ it("will detect if clicked outside", () => {
 });
 
 it("wont call if clicked internally", () => {
-    const ref = { current: control.container };
+    const ref = { current: container };
 
     prxClickOutside(ref, spy);
     expect(spy).not.toHaveBeenCalled();
 
     act(() => {
-        control.container.dispatchEvent(createSandboxClickEvent());
+        container.dispatchEvent(createSandboxClickEvent());
     });
 
     prxClickOutside(ref, spy);
