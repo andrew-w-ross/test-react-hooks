@@ -4,10 +4,10 @@ import { createTestProxy } from "../createTestProxy";
 const [prxDebugValue] = createTestProxy(useDebugValue);
 
 it("won't break", () => {
-  prxDebugValue("value");
+    prxDebugValue("value");
 });
 
 it("won't break with format", () => {
-  const spy = jest.fn();
-  prxDebugValue("value", spy);
+    const spy = jest.fn();
+    prxDebugValue("value", spy);
 });
