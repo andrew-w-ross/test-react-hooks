@@ -1,7 +1,7 @@
 name: CI
 on:
   pull_request:
-    branches: [master, 'feature/v3']
+    branches: [master, 'releases/*']
 jobs:
   build:
     runs-on: ubuntu-latest
