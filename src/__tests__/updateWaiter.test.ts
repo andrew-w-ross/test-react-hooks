@@ -24,17 +24,17 @@ it("waitForNextUpdate.updateCount will wait for a specific amount of async updat
 
 it("waitForNextUpdate.debounce can debounce on async events", async () => {
     const { updateSubject, waitForNextUpdate } = createWaitForNextUpdate();
-    waitForNextUpdate().debounce(3).then(resolveSpy);
+    waitForNextUpdate().debounce(10).then(resolveSpy);
 
     updateSubject.next({ async: true });
-    await wait(2);
+    await wait(6);
     expect(resolveSpy).not.toHaveBeenCalled();
 
     updateSubject.next({ async: true });
-    await wait(2);
+    await wait(6);
     expect(resolveSpy).not.toHaveBeenCalled();
 
-    await wait(4);
+    await wait(8);
     expect(resolveSpy).toHaveBeenCalled();
 });
 
