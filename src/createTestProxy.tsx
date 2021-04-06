@@ -1,5 +1,8 @@
 import type { FC } from "react";
-import type { ReactTestRenderer } from "react-test-renderer";
+import type {
+    ReactTestRenderer,
+    TestRendererOptions,
+} from "react-test-renderer";
 import { act, create } from "react-test-renderer";
 import { CallbackComponent } from "./CallbackComponent";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -31,6 +34,8 @@ export type UseProxyOptions = {
      * Component to wrap the test component in
      */
     wrapper?: React.ComponentType<{}>;
+
+    testRendererOptions?: TestRendererOptions;
 };
 
 /**
@@ -47,7 +52,7 @@ export type UseProxyOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { wrapper }: UseProxyOptions = {},
+    { wrapper, testRendererOptions }: UseProxyOptions = {},
 ) {
     let key: string | null = null;
     let Wrapper = wrapper ?? DefaultWrapper;
@@ -105,7 +110,7 @@ export function createTestProxy<THook extends TestHook>(
 
         act(() => {
             if (reactTestRenderer == null) {
-                reactTestRenderer = create(element);
+                reactTestRenderer = create(element, testRendererOptions);
                 cleanUpFns.push(cleanup);
             } else {
                 reactTestRenderer.update(element);
