@@ -1,5 +1,14 @@
 import { useEffect } from "react";
 import { createTestProxy } from "../createTestProxy";
+import { wait } from "../utils";
+
+/**
+ * Just a general design goal for errors. Hooks shouldn't fail silently it should fail at the closest spot to invocation.
+ * - If the error occurs in response to a hook call it should throw there
+ * - If it happens on unmount it should throw on the call
+ * - If it happens on an async wait it should reject
+ * - Lastly on cleanup catch all errors
+ */
 
 type ThrowWhen = "render" | "aftermount" | "unmount" | "async";
 
@@ -7,8 +16,15 @@ function useError(when: ThrowWhen, deps: any[] = []) {
     if (when === "render") throw new Error(when);
     useEffect(() => {
         if (when === "aftermount") throw new Error(when);
+        if (when === "async") {
+            wait().then(() => {
+                throw new Error(when);
+            });
+        }
         return () => {
-            throw new Error(when);
+            if (when === "unmount") {
+                throw new Error(when);
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [when, ...deps]);
@@ -34,18 +50,12 @@ it("will throw after mount", () => {
 
 it("will throw on unmount", () => {
     prxError("unmount");
-    control.unmount();
-    expect(control.error).toEqual(
-        expect.objectContaining({ message: "unmount" }),
-    );
+    expect(() => control.unmount()).toThrowError();
 });
 
 it("will throw on deps change", () => {
     prxError("unmount", [1]);
-    expect(control.error).toBeNull();
-
     expect(() => prxError("unmount", [2])).toThrowError();
-    expect(control.error).not.toBeNull();
     expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining("The above error occurred in the"),
     );
