@@ -10,8 +10,8 @@ import { randomNumber } from "./utils";
 export class RenderState {
     private key = randomNumber() + "";
     private reactTestRenderer: ReactTestRenderer | null = null;
-    private caughtError?: Error;
     private element?: ReactElement;
+    public caughtError?: Error;
 
     constructor(private testRendererOptions?: TestRendererOptions) {}
 

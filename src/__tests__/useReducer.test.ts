@@ -48,10 +48,12 @@ it("will handle multiple dispatches", () => {
     expect(state.count).toBe(2);
 });
 
-xit("will catch the error", () => {
+it("will catch the error", () => {
     const [, dispatch] = prxReducer(reducer, initialState);
-
-    expect(() => dispatch({ type: "throw" })).toThrowError();
+    const callback = () => {
+        dispatch({ type: "throw" });
+    };
+    expect(callback).toThrowError("Boom");
 });
 
 it("will handle lazy initialization", () => {

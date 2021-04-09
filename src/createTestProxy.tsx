@@ -24,12 +24,6 @@ const CallbackComponent = ({ callback }: CallbackHookProps) => {
 };
 
 /**
- * Function that will ensure a function and all it's returned memebers are wrapped in act
- */
-const wrapApplyAct: WrapApplyFn = (...args) =>
-    returnAct(() => Reflect.apply(...args));
-
-/**
  * Wrapper component has to take in and render the children
  */
 export type WrapperComponent = ComponentType<{ children: ReactNode }>;
@@ -66,6 +60,8 @@ export function createTestProxy<THook extends TestHook>(
     } = createWaitForNextUpdate();
 
     let renderState = new RenderState(testRendererOptions);
+    //Is the hook responding to a direct call from the user?
+    let respondingToCall = false;
 
     const cleanup = () => {
         renderState.cleanup();
@@ -73,40 +69,57 @@ export function createTestProxy<THook extends TestHook>(
         clearSubject();
     };
 
+    /**
+     * Function that will ensure a function and all it's returned memebers are wrapped in act
+     */
+    const wrapApplyAct: WrapApplyFn = (...args) => {
+        respondingToCall = true;
+        const result = returnAct(() => Reflect.apply(...args));
+        respondingToCall = false;
+        if (renderState.caughtError) throw renderState.caughtError;
+        return result;
+    };
+
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
 
     //@ts-expect-error
     const renderHook: THook = (...params: Parameters<THook>) => {
+        respondingToCall = true;
         if (!cleanUpFns.includes(cleanup)) {
             cleanUpFns.push(cleanup);
         }
-
-        let isAsync = false;
         let result: ReturnType<TestHook> | undefined = undefined;
-        const Wrapper = wrapper ?? DefaultWrapper;
 
-        const callback = () => {
-            try {
-                result = proxiedHook(...params);
-            } catch (error) {
-                if (!isAsync) throw error;
-                updateSubject.next({ error });
-            } finally {
-                isAsync = true;
-                updateSubject.next({ async: isAsync });
-            }
-        };
+        try {
+            let isAsync = false;
+            const Wrapper = wrapper ?? DefaultWrapper;
 
-        renderState.render(
-            <Wrapper>
-                <CallbackComponent callback={callback} />
-            </Wrapper>,
-        );
+            const callback = () => {
+                try {
+                    result = proxiedHook(...params);
+                } catch (error) {
+                    if (!isAsync || respondingToCall) throw error;
+                    updateSubject.next({ error });
+                } finally {
+                    //TODO : This is wrong, should first emit if async is try and then set isAsync
+                    isAsync = true;
+                    updateSubject.next({ async: isAsync });
+                }
+            };
 
-        if (!isAsync) {
-            console.warn(
-                "Check the code for your wrapper, it should render the children prop",
+            renderState.render(
+                <Wrapper>
+                    <CallbackComponent callback={callback} />
+                </Wrapper>,
             );
+
+            if (!isAsync) {
+                console.warn(
+                    "Check the code for your wrapper, it should render the children prop",
+                );
+            }
+        } finally {
+            respondingToCall = false;
         }
 
         return result!;
