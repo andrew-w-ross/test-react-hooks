@@ -1,17 +1,10 @@
-import type { FC } from "react";
-import type {
-    ReactTestRenderer,
-    TestRendererOptions,
-} from "react-test-renderer";
-import { act, create } from "react-test-renderer";
-import { CallbackComponent } from "./CallbackComponent";
-import { ErrorBoundary } from "./ErrorBoundary";
+import type { ComponentType, ReactNode } from "react";
+import type { TestRendererOptions } from "react-test-renderer";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
-import { randomNumber, returnAct } from "./utils";
+import { RenderState } from "./RenderState";
 import { createWaitForNextUpdate } from "./updateWaiter";
-
-export type TestHook = (...args: any[]) => any;
+import { returnAct } from "./utils";
 
 const cleanUpFns: Function[] = [];
 
@@ -21,21 +14,27 @@ export function cleanUp() {
 
 if (!process.env.TEST_REACT_HOOKS_NO_CLEANUP) globalThis?.afterEach?.(cleanUp);
 
-const DefaultWrapper: FC = ({ children }) => <>{children}</>;
+type CallbackHookProps = {
+    callback: Function;
+};
+
+const CallbackComponent = ({ callback }: CallbackHookProps) => {
+    callback();
+    return null;
+};
 
 /**
- * Function that will ensure a function and all it's returned memebers are wrapped in act
+ * Wrapper component has to take in and render the children
  */
-const wrapApplyAct: WrapApplyFn = (...args) =>
-    returnAct(() => Reflect.apply(...args));
+export type WrapperComponent = ComponentType<{ children: ReactNode }>;
+
+const DefaultWrapper: WrapperComponent = ({ children }) => <>{children}</>;
+
+export type TestHook = (...args: any[]) => any;
 
 export type UseProxyOptions = {
-    /**
-     * Component to wrap the test component in
-     */
-    wrapper?: React.ComponentType<{}>;
-
     testRendererOptions?: TestRendererOptions;
+    wrapper?: WrapperComponent;
 };
 
 /**
@@ -52,101 +51,91 @@ export type UseProxyOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { wrapper, testRendererOptions }: UseProxyOptions = {},
+    { testRendererOptions, wrapper }: UseProxyOptions = {},
 ) {
-    let key: string | null = null;
-    let Wrapper = wrapper ?? DefaultWrapper;
-    let reactTestRenderer: ReactTestRenderer | null = null;
-
-    let result: ReturnType<TestHook> | undefined = undefined;
-    let caughtError: Error | null = null;
-
-    const proxiedHook = wrapProxy(hook, wrapApplyAct);
     const {
         updateSubject,
         waitForNextUpdate,
         clearSubject,
     } = createWaitForNextUpdate();
 
+    let renderState = new RenderState(testRendererOptions);
+    //Is the hook responding to a direct call from the user?
+    let respondingToApply = false;
+
     const cleanup = () => {
-        act(() => {
-            if (reactTestRenderer) {
-                reactTestRenderer.unmount();
-            }
-        });
-        reactTestRenderer = null;
-        key = null;
+        renderState.cleanup();
+        renderState = new RenderState(testRendererOptions);
         clearSubject();
     };
 
-    const render = (...params: Parameters<THook>) => {
-        let wasCalled = false;
-        caughtError = null;
-        if (key == null) {
-            key = randomNumber() + "";
-        }
-        const element = (
-            <ErrorBoundary
-                key={key}
-                onError={(error) => {
-                    caughtError = error;
-                    updateSubject.next({ error });
-                }}
-            >
-                <Wrapper>
-                    <CallbackComponent
-                        callback={() => {
-                            try {
-                                result = proxiedHook(...params);
-                            } finally {
-                                wasCalled = true;
-                                updateSubject.next({ async: wasCalled });
-                            }
-                        }}
-                    />
-                </Wrapper>
-            </ErrorBoundary>
-        );
-
-        act(() => {
-            if (reactTestRenderer == null) {
-                reactTestRenderer = create(element, testRendererOptions);
-                cleanUpFns.push(cleanup);
-            } else {
-                reactTestRenderer.update(element);
-            }
-        });
-
-        if (!wasCalled && Wrapper !== DefaultWrapper) {
-            console.warn(
-                "Check the code for your wrapper, it should render the children prop",
-            );
-        }
-
-        if (caughtError) {
-            throw caughtError;
-        }
-
+    /**
+     * Function that will ensure a function and all it's returned memebers are wrapped in act
+     */
+    const wrapApplyAct: WrapApplyFn = (...args) => {
+        respondingToApply = true;
+        const result = returnAct(() => Reflect.apply(...args));
+        respondingToApply = false;
+        if (renderState.caughtError) throw renderState.caughtError;
         return result;
+    };
+
+    const proxiedHook = wrapProxy(hook, wrapApplyAct);
+
+    //@ts-expect-error
+    const renderHook: THook = (...params: Parameters<THook>) => {
+        respondingToApply = true;
+        if (!cleanUpFns.includes(cleanup)) {
+            cleanUpFns.push(cleanup);
+        }
+        let result: ReturnType<TestHook> | undefined = undefined;
+
+        try {
+            let isAsync = false;
+            const Wrapper = wrapper ?? DefaultWrapper;
+
+            const callback = () => {
+                try {
+                    result = proxiedHook(...params);
+                    updateSubject.next({ async: isAsync });
+                } catch (error) {
+                    if (!isAsync || respondingToApply) throw error;
+                    updateSubject.next({ error });
+                } finally {
+                    isAsync = true;
+                }
+            };
+
+            renderState.render(
+                <Wrapper>
+                    <CallbackComponent callback={callback} />
+                </Wrapper>,
+            );
+
+            if (!isAsync) {
+                console.warn(
+                    "Check the code for your wrapper, it should render the children prop",
+                );
+            }
+        } finally {
+            respondingToApply = false;
+        }
+
+        return result!;
     };
 
     const control = {
         get updateObserver() {
             return updateSubject.asObservable();
         },
-        get error() {
-            return caughtError;
+        set wrapper(wrapperComponent: WrapperComponent | null | undefined) {
+            wrapper = wrapperComponent ?? undefined;
         },
-        unmount: () => {
-            act(() => {
-                reactTestRenderer?.unmount();
-            });
-        },
-        set wrapper(newWrapper: React.ComponentType<{}> | null) {
-            Wrapper = newWrapper ?? DefaultWrapper;
-        },
+        unmount: () => renderState.unmount(),
         waitForNextUpdate,
     };
 
-    return [render as THook, control] as const;
+    return [renderHook, control] as const;
 }
+
+export type TestProxyControl = ReturnType<typeof createTestProxy>[1];

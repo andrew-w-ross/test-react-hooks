@@ -19,8 +19,7 @@ function reducer(state: typeof initialState, action: Action) {
     }
 }
 
-const errorSpy = jest.spyOn(console, "error");
-const [prxReducer, control] = createTestProxy(useReducer);
+const [prxReducer] = createTestProxy(useReducer);
 
 it("will have initial state", () => {
     const [state] = prxReducer(reducer, initialState);
@@ -51,13 +50,10 @@ it("will handle multiple dispatches", () => {
 
 it("will catch the error", () => {
     const [, dispatch] = prxReducer(reducer, initialState);
-    expect(control.error).toBeNull();
-
-    dispatch({ type: "throw" });
-    expect(control.error).toEqual(expect.objectContaining({ message: "Boom" }));
-    expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("The above error occurred in the"),
-    );
+    const callback = () => {
+        dispatch({ type: "throw" });
+    };
+    expect(callback).toThrowError("Boom");
 });
 
 it("will handle lazy initialization", () => {
