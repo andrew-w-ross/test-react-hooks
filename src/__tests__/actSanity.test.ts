@@ -46,7 +46,7 @@ it("throws async error", async () => {
 
 it("will not return the result of the inner function", async () => {
     //@ts-expect-error
-    const result = act(() => 1);
+    const result = act(async () => 1);
     await expect(result).resolves.toBeUndefined();
 });
 

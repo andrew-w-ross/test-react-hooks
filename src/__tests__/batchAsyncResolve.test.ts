@@ -62,6 +62,8 @@ it("can wait for single event", async () => {
         const value = prxBatchAsync(4);
         expect(value).toEqual(2);
     }
+
+    expect(errorSpy).not.toHaveBeenCalled();
 });
 
 it(`regardless of the throttleTime it'll still wait for the first change`, async () => {
@@ -78,4 +80,8 @@ it(`regardless of the throttleTime it'll still wait for the first change`, async
         const value = prxBatchAsync(10);
         expect(value).toBe(1);
     }
+
+    await control.waitForNextUpdate();
+
+    expect(errorSpy).not.toHaveBeenCalled();
 });
