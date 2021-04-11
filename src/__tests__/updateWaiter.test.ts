@@ -64,7 +64,6 @@ it("will throw if an error is piped through", async () => {
     expect(rejectSpy).toHaveBeenCalledWith(error);
 });
 
-//It's not a huge deal if this doesn't work but I would like the error to be thrown more cleanly
 xit("will throw if an error occures during act", async () => {
     const { waitForNextUpdate } = createWaitForNextUpdate();
 
@@ -72,5 +71,5 @@ xit("will throw if an error occures during act", async () => {
         throw new Error("boom");
     });
 
-    await expect(updateWait).rejects.toEqual(expect.any(Error));
+    await expect(updateWait).rejects.toThrowError("boom");
 });

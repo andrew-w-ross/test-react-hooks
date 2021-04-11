@@ -61,7 +61,7 @@ export function createTestProxy<THook extends TestHook>(
 
     let renderState = new RenderState(testRendererOptions);
     //Is the hook responding to a direct call from the user?
-    let respondingToCall = false;
+    let respondingToApply = false;
 
     const cleanup = () => {
         renderState.cleanup();
@@ -73,9 +73,9 @@ export function createTestProxy<THook extends TestHook>(
      * Function that will ensure a function and all it's returned memebers are wrapped in act
      */
     const wrapApplyAct: WrapApplyFn = (...args) => {
-        respondingToCall = true;
+        respondingToApply = true;
         const result = returnAct(() => Reflect.apply(...args));
-        respondingToCall = false;
+        respondingToApply = false;
         if (renderState.caughtError) throw renderState.caughtError;
         return result;
     };
@@ -84,7 +84,7 @@ export function createTestProxy<THook extends TestHook>(
 
     //@ts-expect-error
     const renderHook: THook = (...params: Parameters<THook>) => {
-        respondingToCall = true;
+        respondingToApply = true;
         if (!cleanUpFns.includes(cleanup)) {
             cleanUpFns.push(cleanup);
         }
@@ -97,13 +97,12 @@ export function createTestProxy<THook extends TestHook>(
             const callback = () => {
                 try {
                     result = proxiedHook(...params);
+                    updateSubject.next({ async: isAsync });
                 } catch (error) {
-                    if (!isAsync || respondingToCall) throw error;
+                    if (!isAsync || respondingToApply) throw error;
                     updateSubject.next({ error });
                 } finally {
-                    //TODO : This is wrong, should first emit if async is try and then set isAsync
                     isAsync = true;
-                    updateSubject.next({ async: isAsync });
                 }
             };
 
@@ -119,7 +118,7 @@ export function createTestProxy<THook extends TestHook>(
                 );
             }
         } finally {
-            respondingToCall = false;
+            respondingToApply = false;
         }
 
         return result!;

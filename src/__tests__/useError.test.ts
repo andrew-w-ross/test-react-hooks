@@ -60,3 +60,8 @@ it("will throw on deps change", () => {
         expect.stringContaining("The above error occurred in the"),
     );
 });
+
+xit("will throw on async error", async () => {
+    prxError("async");
+    await expect(control.waitForNextUpdate()).rejects.toThrowError("async");
+});
