@@ -71,3 +71,71 @@ it("will throw if an error occures during act", async () => {
 
     await expect(updateWait).rejects.toThrowError("boom");
 });
+
+it("will warn if act function is overriden", () => {
+    const errorSpy = jest.spyOn(console, "warn");
+    const { createWaiter } = createWaitForNextUpdate();
+
+    const updateWaiter = createWaiter().act(() => {});
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    updateWaiter.act(() => {});
+    expect(errorSpy).toHaveBeenCalled();
+});
+
+it("will wait for one of the promises to resolve in race", async () => {
+    const { createWaiter, updateSubject } = createWaitForNextUpdate();
+
+    createWaiter()
+        .waitMode("race")
+        .updateCount(1)
+        .updateCount(2)
+        .wait()
+        .then(resolveSpy);
+
+    expect(resolveSpy).not.toHaveBeenCalled();
+
+    updateSubject.next({ async: true });
+    await wait();
+    expect(resolveSpy).toHaveBeenCalled();
+});
+
+it("will wait for all of the promises to resolve in race", async () => {
+    const { createWaiter, updateSubject } = createWaitForNextUpdate();
+
+    createWaiter()
+        .waitMode("all")
+        .updateCount(1)
+        .updateCount(2)
+        .wait()
+        .then(resolveSpy);
+
+    expect(resolveSpy).not.toHaveBeenCalled();
+
+    updateSubject.next({ async: true });
+    await wait();
+    expect(resolveSpy).not.toHaveBeenCalled();
+
+    updateSubject.next({ async: true });
+    await wait();
+    expect(resolveSpy).toHaveBeenCalled();
+});
+
+it("will throw if modified after wait", () => {
+    const { createWaiter } = createWaitForNextUpdate();
+
+    const waiter = createWaiter();
+    waiter.wait();
+
+    expect(() => waiter.debounce()).toThrowError();
+});
+
+it("will return the same promise for multiple calls to wait()", () => {
+    const { createWaiter } = createWaitForNextUpdate();
+
+    const waiter = createWaiter();
+    const waitPromise1 = waiter.wait();
+    const waitPromise2 = waiter.wait();
+
+    expect(waitPromise1).toEqual(waitPromise2);
+});

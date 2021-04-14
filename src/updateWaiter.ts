@@ -45,8 +45,7 @@ export class UpdateWaiter {
     private executePromise?: Promise<void>;
 
     constructor(inputObservable: Observable<UpdateEvent>) {
-        //@ts-expect-error
-        this.updateObserver = publish()(inputObservable);
+        this.updateObserver = publish<UpdateEvent>()(inputObservable);
 
         this.asyncObserver = this.updateObserver.pipe(
             filter((v) => v.async === true),
@@ -82,7 +81,7 @@ export class UpdateWaiter {
                 ? combineLatest(this.waiters)
                 : race(this.waiters);
 
-        const executePromise = race(this.errorObserver, waitStream)
+        this.executePromise = race(this.errorObserver, waitStream)
             .pipe(take(1))
             .toPromise();
 
@@ -90,7 +89,7 @@ export class UpdateWaiter {
 
         const actPromise = act(async () => {
             await this.actFn?.();
-            await executePromise;
+            await this.executePromise;
         });
 
         this.postActFn?.();
