@@ -56,7 +56,7 @@ it("toPromise will resolve with an await", async () => {
     subject.next(4);
     expect(resolveSpy).not.toHaveBeenCalled();
 
-    await undefined; //Same as await Promise.resolve();
+    await undefined;
     expect(resolveSpy).toHaveBeenCalledWith(4);
 });
 

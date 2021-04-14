@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { createTestProxy } from "../createTestProxy";
-import { wait } from "../utils";
 
 /**
  * Just a general design goal for errors. Hooks shouldn't fail silently it should fail at the closest spot to invocation.
@@ -10,17 +9,12 @@ import { wait } from "../utils";
  * - Lastly on cleanup catch all errors
  */
 
-type ThrowWhen = "render" | "aftermount" | "unmount" | "async";
+type ThrowWhen = "render" | "aftermount" | "unmount";
 
 function useError(when: ThrowWhen, deps: any[] = []) {
     if (when === "render") throw new Error(when);
     useEffect(() => {
         if (when === "aftermount") throw new Error(when);
-        if (when === "async") {
-            wait().then(() => {
-                throw new Error(when);
-            });
-        }
         return () => {
             if (when === "unmount") {
                 throw new Error(when);
@@ -59,9 +53,4 @@ it("will throw on deps change", () => {
     expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining("The above error occurred in the"),
     );
-});
-
-xit("will throw on async error", async () => {
-    prxError("async");
-    await expect(control.waitForNextUpdate()).rejects.toThrowError("async");
 });

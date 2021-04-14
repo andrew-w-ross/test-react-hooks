@@ -34,7 +34,7 @@ export type CustomWaitArgs = {
     asyncObserver: Observable<UpdateEvent>;
 };
 
-export class UpdateWaiter implements PromiseLike<void> {
+export class UpdateWaiter {
     private updateObserver: ConnectableObservable<UpdateEvent>;
     private asyncObserver: Observable<UpdateEvent>;
     private errorObserver: Observable<void>;
@@ -70,7 +70,8 @@ export class UpdateWaiter implements PromiseLike<void> {
             );
     }
 
-    private async execute() {
+    async wait() {
+        if (this.executePromise) return this.executePromise;
         //No promises added, default to debounce.
         if (this.waiters.length === 0) {
             this.debounce();
@@ -94,23 +95,6 @@ export class UpdateWaiter implements PromiseLike<void> {
 
         this.postActFn?.();
         return actPromise;
-    }
-
-    get then() {
-        //To replicate a promise start an execution before then is called.
-        //Be super careful when changing this, it matters when await is involved
-        this.executePromise = this.execute();
-        return <TResult1 = void, TResult2 = never>(
-            onfulfilled?:
-                | ((value: void) => TResult1 | PromiseLike<TResult1>)
-                | null,
-            onrejected?:
-                | ((reason: any) => TResult2 | PromiseLike<TResult2>)
-                | null,
-        ): PromiseLike<TResult1 | TResult2> => {
-            //This is kinda sneaky but makes this so much easier to use
-            return this.executePromise!.then(onfulfilled, onrejected);
-        };
     }
 
     act(actFn: () => any | Promise<any>) {
@@ -169,11 +153,11 @@ export class UpdateWaiter implements PromiseLike<void> {
  */
 export function createWaitForNextUpdate() {
     const subject = new Subject<UpdateEvent>();
-    const waitForNextUpdate = () => new UpdateWaiter(subject.asObservable());
+    const createWaiter = () => new UpdateWaiter(subject.asObservable());
 
     return {
         updateSubject: subject,
-        waitForNextUpdate,
+        createWaiter,
         clearSubject: () => {
             const observers = subject.observers.splice(0);
             observers.forEach((observer) => observer.complete());

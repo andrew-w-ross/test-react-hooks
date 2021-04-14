@@ -53,8 +53,7 @@
             "<rootDir>/src/"
         ],
         "testEnvironment": "node",
-        "testTimeout": 500,
-        "silent": true
+        "testTimeout": 500
     },
     "keywords": [
         "react",
