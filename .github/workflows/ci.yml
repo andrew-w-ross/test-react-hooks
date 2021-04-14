@@ -19,7 +19,7 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
       - uses: actions/cache@v2
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
@@ -29,19 +29,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - run: |
+
+      - name: Build, Lint and Test
+        run: |
           yarn
           yarn run check
+          yarn build
           yarn test
+          
 
       - name: Link Package
+        working-directory: ./examples
         run: |
-          yarn build
-          yarn link
+          yarn link ../
+          yarn
 
       - name: Test examples
         working-directory: ./examples
-        run: |
-          yarn link test-react-hooks
-          yarn
-          yarn test
+        run: yarn jest
+          

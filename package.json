@@ -10,7 +10,6 @@
     "repository": "git@github.com:andrew-w-ross/test-react-hooks.git",
     "author": "Andrew Ross <rossirsa@gmail.com>",
     "license": "MIT",
-    "private": false,
     "peerDependencies": {
         "react": ">= 16.8.0",
         "react-test-renderer": ">= 16.8.0"
@@ -63,5 +62,8 @@
     ],
     "dependencies": {
         "rxjs": "^6.6.7"
+    },
+    "resolutions": {
+        "examples": "portal:/home/ross/Projects/test-react-hooks-master/examples"
     }
 }
