@@ -49,14 +49,14 @@ it("can wait for single event", async () => {
         expect(value).toEqual(0);
     }
 
-    await control.waitForNextUpdate().updateCount(1);
+    await control.waitForNextUpdate((waiter) => waiter.updateCount(1));
 
     {
         const value = prxBatchAsync(4);
         expect(value).toEqual(1);
     }
 
-    await control.waitForNextUpdate().updateCount(1);
+    await control.waitForNextUpdate((waiter) => waiter.updateCount(1));
 
     {
         const value = prxBatchAsync(4);

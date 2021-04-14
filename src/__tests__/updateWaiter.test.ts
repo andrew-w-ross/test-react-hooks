@@ -1,12 +1,11 @@
 import { createWaitForNextUpdate } from "../updateWaiter";
 import { wait } from "../utils";
 
-const rejectSpy = jest.fn();
 const resolveSpy = jest.fn();
 
 it("waitForNextUpdate.updateCount will wait for a specific amount of async update", async () => {
-    const { updateSubject, waitForNextUpdate } = createWaitForNextUpdate();
-    waitForNextUpdate().updateCount(2).then(resolveSpy);
+    const { updateSubject, createWaiter } = createWaitForNextUpdate();
+    createWaiter().updateCount(2).wait().then(resolveSpy);
 
     updateSubject.next({ async: false });
     await wait();
@@ -23,8 +22,8 @@ it("waitForNextUpdate.updateCount will wait for a specific amount of async updat
 });
 
 it("waitForNextUpdate.debounce can debounce on async events", async () => {
-    const { updateSubject, waitForNextUpdate } = createWaitForNextUpdate();
-    waitForNextUpdate().debounce(10).then(resolveSpy);
+    const { updateSubject, createWaiter } = createWaitForNextUpdate();
+    createWaiter().debounce(10).wait().then(resolveSpy);
 
     updateSubject.next({ async: true });
     await wait(6);
@@ -39,37 +38,36 @@ it("waitForNextUpdate.debounce can debounce on async events", async () => {
 });
 
 it("by default use debounce function", () => {
-    const { waitForNextUpdate } = createWaitForNextUpdate();
+    const { createWaiter } = createWaitForNextUpdate();
 
-    const updateWaiter = waitForNextUpdate();
+    const updateWaiter = createWaiter();
     const debounceSpy = jest.spyOn(updateWaiter, "debounce");
 
     expect(debounceSpy).not.toHaveBeenCalled();
 
     //Then will force execution
-    updateWaiter.then(resolveSpy);
+    updateWaiter.wait();
     expect(debounceSpy).toHaveBeenCalled();
 });
 
 it("will throw if an error is piped through", async () => {
-    const { waitForNextUpdate, updateSubject } = createWaitForNextUpdate();
+    const { createWaiter, updateSubject } = createWaitForNextUpdate();
 
     const error = new Error("boom");
-    waitForNextUpdate().then(resolveSpy, rejectSpy);
+    const waitPromise = createWaiter().wait();
     updateSubject.next({ error });
 
-    await wait();
-
-    expect(resolveSpy).not.toHaveBeenCalled();
-    expect(rejectSpy).toHaveBeenCalledWith(error);
+    await expect(waitPromise).rejects.toThrowError(error);
 });
 
-xit("will throw if an error occures during act", async () => {
-    const { waitForNextUpdate } = createWaitForNextUpdate();
+it("will throw if an error occures during act", async () => {
+    const { createWaiter } = createWaitForNextUpdate();
 
-    const updateWait = waitForNextUpdate().act(() => {
-        throw new Error("boom");
-    });
+    const updateWait = createWaiter()
+        .act(() => {
+            throw new Error("boom");
+        })
+        .wait();
 
     await expect(updateWait).rejects.toThrowError("boom");
 });
