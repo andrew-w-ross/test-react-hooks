@@ -3,7 +3,6 @@ import type { TestRendererOptions } from "react-test-renderer";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
 import { RenderState } from "./RenderState";
-import type { UpdateWaiter } from "./updateWaiter";
 import { createWaitForNextUpdate } from "./updateWaiter";
 import { returnAct } from "./utils";
 
@@ -133,15 +132,7 @@ export function createTestProxy<THook extends TestHook>(
             wrapper = wrapperComponent ?? undefined;
         },
         unmount: () => renderState.unmount(),
-        waitForNextUpdate: (
-            config?: (waiter: UpdateWaiter) => void | UpdateWaiter,
-        ) => {
-            const waiter = createWaiter();
-            config?.(waiter);
-            return waiter.wait();
-        },
-
-        createWaiter,
+        waitForNextUpdate: () => createWaiter(),
     };
 
     return [renderHook, control] as const;

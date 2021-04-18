@@ -1,9 +1,5 @@
 import { act } from "react-test-renderer";
-import type {
-    ConnectableObservable,
-    Observable,
-    SubscribableOrPromise,
-} from "rxjs";
+import type { Observable, SubscribableOrPromise } from "rxjs";
 import { combineLatest, race, Subject } from "rxjs";
 import {
     bufferCount,
@@ -13,6 +9,7 @@ import {
     publish,
     take,
 } from "rxjs/operators";
+import { promiseWithExternalExecutor } from "./utils";
 
 /**
  * What wait mode to use for multiple promises, @see Promise.race or @see Promise.all
@@ -23,77 +20,43 @@ export type UpdateEvent =
     | { async: boolean; error?: undefined }
     | { error: Error; async?: undefined };
 
-export type CustomWaitArgs = {
-    /**
-     * Observer that gets all the updates
-     */
-    updateObserver: Observable<UpdateEvent>;
-    /**
-     * Convenience observer, the @see updateObserver with the filter for async === true.
-     */
-    asyncObserver: Observable<UpdateEvent>;
-};
+export class AlreadyExecutedError extends Error {
+    constructor() {
+        super("Already executed");
+    }
+}
 
-export class UpdateWaiter {
-    private updateObserver: ConnectableObservable<UpdateEvent>;
-    private asyncObserver: Observable<UpdateEvent>;
-    private errorObserver: Observable<void>;
-    private waiters: SubscribableOrPromise<any>[] = [];
-    private _waitMode: WaitMode = "all";
-    private actFn?: () => any;
-    private postActFn?: () => any;
-    private executePromise?: Promise<void>;
+/**
+ * Fluent api for
+ */
+export class UpdateWaiter extends Promise<void> {
+    public executed = false;
+    public waiters: SubscribableOrPromise<any>[] = [];
+    public waitMode: WaitMode = "all";
+    public actFn?: () => any | Promise<any>;
+    public preActFn?: () => void;
 
-    constructor(inputObservable: Observable<UpdateEvent>) {
-        this.updateObserver = publish<UpdateEvent>()(inputObservable);
-
-        this.asyncObserver = this.updateObserver.pipe(
-            filter((v) => v.async === true),
-        );
-        this.errorObserver = this.updateObserver.pipe(
-            filter((v) => v.error != null),
-            map((v) => {
-                throw v.error;
-            }),
-        );
+    constructor(
+        executor: (
+            resolve: (value: void | PromiseLike<void>) => void,
+            reject: (reason?: any) => void,
+        ) => void,
+        private updateObserver: Observable<UpdateEvent>,
+    ) {
+        super(executor);
     }
 
-    get hasExecuted() {
-        return this.executePromise != null;
-    }
+    addWaiter(
+        waitFn: (
+            updateObserver: Observable<UpdateEvent>,
+        ) => SubscribableOrPromise<any>,
+    ) {
+        if (this.updateObserver == null || this.executed)
+            throw new AlreadyExecutedError();
 
-    private checkCallState() {
-        if (this.hasExecuted)
-            throw new Error(
-                `Waiter has already executed. Add wait rules synchronously, the rules themselves are allowed to be async.`,
-            );
-    }
+        this.waiters.push(waitFn(this.updateObserver));
 
-    async wait() {
-        if (this.executePromise) return this.executePromise;
-        //No promises added, default to debounce.
-        if (this.waiters.length === 0) {
-            this.debounce();
-        }
-
-        const waitStream =
-            this._waitMode === "all"
-                ? combineLatest(this.waiters)
-                : race(this.waiters);
-
-        this.executePromise = race(this.errorObserver, waitStream)
-            .pipe(take(1))
-            .toPromise();
-
-        this.updateObserver.connect();
-
-        const actPromise = act(async () => {
-            await this.actFn?.();
-            await this.executePromise;
-        });
-
-        this.postActFn?.();
-        return actPromise;
+        return this;
     }
 
     act(actFn: () => any | Promise<any>) {
@@ -106,42 +69,34 @@ export class UpdateWaiter {
         return this;
     }
 
-    debounce(ms = 2): this {
-        this.checkCallState();
-        const debounceObserver = this.asyncObserver.pipe(debounceTime(ms));
-
-        this.waiters.push(debounceObserver);
-
+    preAct(preActFn: () => void) {
+        if (this.preActFn != null) {
+            console.warn(
+                "preActFn is already declared, overriding the current one",
+            );
+        }
+        this.preActFn = preActFn;
         return this;
     }
 
-    updateCount(count = 1) {
-        this.checkCallState();
-        const bufferObserver = this.asyncObserver.pipe(bufferCount(count));
+    debounce = (ms = 2) =>
+        this.addWaiter((update$) =>
+            update$.pipe(
+                filter((v) => v.async === true),
+                debounceTime(ms),
+            ),
+        );
 
-        this.waiters.push(bufferObserver);
+    updateCount = (count = 1) =>
+        this.addWaiter((update$) =>
+            update$.pipe(
+                filter((v) => v.async === true),
+                bufferCount(count),
+            ),
+        );
 
-        return this;
-    }
-
-    customWait(
-        waitFn: (waitArgs: CustomWaitArgs) => SubscribableOrPromise<any>,
-    ) {
-        this.checkCallState();
-
-        const waitArgs: CustomWaitArgs = {
-            asyncObserver: this.asyncObserver,
-            updateObserver: this.updateObserver,
-        };
-        this.waiters.push(waitFn(waitArgs));
-
-        return this;
-    }
-
-    //TODO : Test this behaviour
-    waitMode(mode: WaitMode) {
-        this.checkCallState();
-        this._waitMode = mode;
+    iterationMode(mode: WaitMode) {
+        this.waitMode = mode;
         return this;
     }
 }
@@ -152,7 +107,54 @@ export class UpdateWaiter {
  */
 export function createWaitForNextUpdate() {
     const subject = new Subject<UpdateEvent>();
-    const createWaiter = () => new UpdateWaiter(subject.asObservable());
+    const createWaiter = () => {
+        const {
+            executor,
+            promise: deferredPromise,
+        } = promiseWithExternalExecutor<void>();
+        const updateObserver = publish<UpdateEvent>()(subject.asObservable());
+
+        const waiter = new UpdateWaiter((resolve) => {
+            resolve(deferredPromise);
+        }, updateObserver);
+
+        const execute = async () => {
+            if (waiter.waiters.length === 0) {
+                waiter.debounce();
+            }
+
+            const waitStream =
+                waiter.waitMode === "all"
+                    ? combineLatest(waiter.waiters)
+                    : race(waiter.waiters);
+
+            const errorStream = updateObserver.pipe(
+                filter((v) => v.error != null),
+                map((v) => {
+                    throw v.error;
+                }),
+            );
+
+            waiter.executed = true;
+            const execution = race(errorStream, waitStream)
+                .pipe(take(1))
+                .toPromise();
+
+            const actPromise = act(async () => {
+                await waiter.actFn?.();
+                await execution;
+            });
+
+            updateObserver.connect();
+            waiter.preActFn?.();
+
+            return actPromise;
+        };
+
+        Promise.resolve().then(() => executor.resolve(execute()));
+
+        return waiter;
+    };
 
     return {
         updateSubject: subject,

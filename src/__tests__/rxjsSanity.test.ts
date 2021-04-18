@@ -6,7 +6,6 @@ import { debounceTime, take } from "rxjs/operators";
  * of specific behavior that must hold true for the rest of this library to work.
  * Hopefully these tests will work as a canary in a coal mine if the behavior for rxjs changes.
  */
-
 afterEach(() => {
     jest.useRealTimers();
 });
@@ -67,10 +66,7 @@ it("debounceTime in legacy timers needs an await to resolve", async () => {
     subject.next(5);
     expect(resolveSpy).not.toHaveBeenCalled();
 
-    jest.runOnlyPendingTimers();
-    expect(resolveSpy).not.toHaveBeenCalled();
-
-    await undefined;
+    await jest.runOnlyPendingTimers();
     expect(resolveSpy).toHaveBeenCalledWith(5);
 });
 
@@ -81,9 +77,6 @@ it("debounceTime in modern timers needs an await to resolve", async () => {
     subject.next(5);
     expect(resolveSpy).not.toHaveBeenCalled();
 
-    jest.runOnlyPendingTimers();
-    expect(resolveSpy).not.toHaveBeenCalled();
-
-    await undefined;
+    await jest.runOnlyPendingTimers();
     expect(resolveSpy).toHaveBeenCalledWith(5);
 });

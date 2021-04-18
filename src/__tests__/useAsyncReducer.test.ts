@@ -62,7 +62,7 @@ function useAsyncReducer(fn: () => Promise<any>) {
 const [prxAsyncReducer, control] = createTestProxy(useAsyncReducer);
 const errorSpy = jest.spyOn(console, "error");
 
-it("will resolve with a result", async () => {
+xit("will resolve with a result", async () => {
     const prxySpy = jest.fn(() => Promise.resolve("foo"));
     {
         const result = prxAsyncReducer(prxySpy);

@@ -5,7 +5,7 @@ const resolveSpy = jest.fn();
 
 it("waitForNextUpdate.updateCount will wait for a specific amount of async update", async () => {
     const { updateSubject, createWaiter } = createWaitForNextUpdate();
-    createWaiter().updateCount(2).wait().then(resolveSpy);
+    createWaiter().updateCount(2).then(resolveSpy);
 
     updateSubject.next({ async: false });
     await wait();
@@ -23,7 +23,7 @@ it("waitForNextUpdate.updateCount will wait for a specific amount of async updat
 
 it("waitForNextUpdate.debounce can debounce on async events", async () => {
     const { updateSubject, createWaiter } = createWaitForNextUpdate();
-    createWaiter().debounce(10).wait().then(resolveSpy);
+    createWaiter().debounce(10).then(resolveSpy);
 
     updateSubject.next({ async: true });
     await wait(6);
@@ -37,7 +37,7 @@ it("waitForNextUpdate.debounce can debounce on async events", async () => {
     expect(resolveSpy).toHaveBeenCalled();
 });
 
-it("by default use debounce function", () => {
+it("by default use debounce function", async () => {
     const { createWaiter } = createWaitForNextUpdate();
 
     const updateWaiter = createWaiter();
@@ -46,15 +46,18 @@ it("by default use debounce function", () => {
     expect(debounceSpy).not.toHaveBeenCalled();
 
     //Then will force execution
-    updateWaiter.wait();
+    await wait();
     expect(debounceSpy).toHaveBeenCalled();
 });
 
 it("will throw if an error is piped through", async () => {
     const { createWaiter, updateSubject } = createWaitForNextUpdate();
 
+    const waitPromise = createWaiter();
+    //Force execution
+    await wait();
+
     const error = new Error("boom");
-    const waitPromise = createWaiter().wait();
     updateSubject.next({ error });
 
     await expect(waitPromise).rejects.toThrowError(error);
@@ -63,11 +66,9 @@ it("will throw if an error is piped through", async () => {
 it("will throw if an error occures during act", async () => {
     const { createWaiter } = createWaitForNextUpdate();
 
-    const updateWait = createWaiter()
-        .act(() => {
-            throw new Error("boom");
-        })
-        .wait();
+    const updateWait = createWaiter().act(() => {
+        throw new Error("boom");
+    });
 
     await expect(updateWait).rejects.toThrowError("boom");
 });
@@ -87,12 +88,14 @@ it("will wait for one of the promises to resolve in race", async () => {
     const { createWaiter, updateSubject } = createWaitForNextUpdate();
 
     createWaiter()
-        .waitMode("race")
+        .iterationMode("race")
         .updateCount(1)
         .updateCount(2)
-        .wait()
         .then(resolveSpy);
+    //force execution
+    await wait();
 
+    await wait();
     expect(resolveSpy).not.toHaveBeenCalled();
 
     updateSubject.next({ async: true });
@@ -103,14 +106,8 @@ it("will wait for one of the promises to resolve in race", async () => {
 it("will wait for all of the promises to resolve in race", async () => {
     const { createWaiter, updateSubject } = createWaitForNextUpdate();
 
-    createWaiter()
-        .waitMode("all")
-        .updateCount(1)
-        .updateCount(2)
-        .wait()
-        .then(resolveSpy);
-
-    expect(resolveSpy).not.toHaveBeenCalled();
+    createWaiter().iterationMode("all").updateCount(2).then(resolveSpy);
+    await wait();
 
     updateSubject.next({ async: true });
     await wait();
@@ -121,21 +118,11 @@ it("will wait for all of the promises to resolve in race", async () => {
     expect(resolveSpy).toHaveBeenCalled();
 });
 
-it("will throw if modified after wait", () => {
+it("will throw if modified after wait", async () => {
     const { createWaiter } = createWaitForNextUpdate();
 
     const waiter = createWaiter();
-    waiter.wait();
+    await Promise.resolve();
 
     expect(() => waiter.debounce()).toThrowError();
-});
-
-it("will return the same promise for multiple calls to wait()", () => {
-    const { createWaiter } = createWaitForNextUpdate();
-
-    const waiter = createWaiter();
-    const waitPromise1 = waiter.wait();
-    const waitPromise2 = waiter.wait();
-
-    expect(waitPromise1).toEqual(waitPromise2);
 });
