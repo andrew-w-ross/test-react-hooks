@@ -10,9 +10,10 @@ import {
     debounceTime,
     filter,
     map,
-    publish,
+    publishReplay,
     take,
 } from "rxjs/operators";
+import { promiseWithExternalExecutor } from "./utils";
 
 /**
  * What wait mode to use for multiple promises, @see Promise.race or @see Promise.all
@@ -23,125 +24,72 @@ export type UpdateEvent =
     | { async: boolean; error?: undefined }
     | { error: Error; async?: undefined };
 
-export type CustomWaitArgs = {
-    /**
-     * Observer that gets all the updates
-     */
-    updateObserver: Observable<UpdateEvent>;
-    /**
-     * Convenience observer, the @see updateObserver with the filter for async === true.
-     */
-    asyncObserver: Observable<UpdateEvent>;
-};
+export class AlreadyExecutedError extends Error {
+    constructor() {
+        super("Already executed");
+    }
+}
 
-export class UpdateWaiter {
-    private updateObserver: ConnectableObservable<UpdateEvent>;
-    private asyncObserver: Observable<UpdateEvent>;
-    private errorObserver: Observable<void>;
-    private waiters: SubscribableOrPromise<any>[] = [];
-    private _waitMode: WaitMode = "all";
-    private actFn?: () => any;
-    private postActFn?: () => any;
-    private executePromise?: Promise<void>;
+/**
+ * Fluent api for
+ */
+export class UpdateWaiter extends Promise<void> {
+    public executed = false;
+    public waiters: SubscribableOrPromise<any>[] = [];
+    public waitMode: WaitMode = "all";
+    public _actFn?: () => any | Promise<any>;
 
-    constructor(inputObservable: Observable<UpdateEvent>) {
-        this.updateObserver = publish<UpdateEvent>()(inputObservable);
-
-        this.asyncObserver = this.updateObserver.pipe(
-            filter((v) => v.async === true),
-        );
-        this.errorObserver = this.updateObserver.pipe(
-            filter((v) => v.error != null),
-            map((v) => {
-                throw v.error;
-            }),
-        );
+    constructor(
+        executor: (
+            resolve: (value: void | PromiseLike<void>) => void,
+            reject: (reason?: any) => void,
+        ) => void,
+        private updateObserver: Observable<UpdateEvent>,
+    ) {
+        super(executor);
     }
 
-    get hasExecuted() {
-        return this.executePromise != null;
-    }
+    addWaiter(
+        waitFn: (
+            updateObserver: Observable<UpdateEvent>,
+        ) => SubscribableOrPromise<any>,
+    ) {
+        if (this.updateObserver == null || this.executed)
+            throw new AlreadyExecutedError();
 
-    private checkCallState() {
-        if (this.hasExecuted)
-            throw new Error(
-                `Waiter has already executed. Add wait rules synchronously, the rules themselves are allowed to be async.`,
-            );
-    }
+        this.waiters.push(waitFn(this.updateObserver));
 
-    async wait() {
-        if (this.executePromise) return this.executePromise;
-        //No promises added, default to debounce.
-        if (this.waiters.length === 0) {
-            this.debounce();
-        }
-
-        const waitStream =
-            this._waitMode === "all"
-                ? combineLatest(this.waiters)
-                : race(this.waiters);
-
-        this.executePromise = race(this.errorObserver, waitStream)
-            .pipe(take(1))
-            .toPromise();
-
-        this.updateObserver.connect();
-
-        const actPromise = act(async () => {
-            await this.actFn?.();
-            await this.executePromise;
-        });
-
-        this.postActFn?.();
-        return actPromise;
+        return this;
     }
 
     act(actFn: () => any | Promise<any>) {
-        if (this.actFn != null) {
+        if (this._actFn != null) {
             console.warn(
-                "actFn is already declared, overriding the current one",
+                "actFn is already defined, overriding the current one",
             );
         }
-        this.actFn = actFn;
+        this._actFn = actFn;
         return this;
     }
 
-    debounce(ms = 2): this {
-        this.checkCallState();
-        const debounceObserver = this.asyncObserver.pipe(debounceTime(ms));
+    debounce = (ms = 2) =>
+        this.addWaiter((update$) =>
+            update$.pipe(
+                filter((v) => v.async === true),
+                debounceTime(ms),
+            ),
+        );
 
-        this.waiters.push(debounceObserver);
+    updateCount = (count = 1) =>
+        this.addWaiter((update$) =>
+            update$.pipe(
+                filter((v) => v.async === true),
+                bufferCount(count),
+            ),
+        );
 
-        return this;
-    }
-
-    updateCount(count = 1) {
-        this.checkCallState();
-        const bufferObserver = this.asyncObserver.pipe(bufferCount(count));
-
-        this.waiters.push(bufferObserver);
-
-        return this;
-    }
-
-    customWait(
-        waitFn: (waitArgs: CustomWaitArgs) => SubscribableOrPromise<any>,
-    ) {
-        this.checkCallState();
-
-        const waitArgs: CustomWaitArgs = {
-            asyncObserver: this.asyncObserver,
-            updateObserver: this.updateObserver,
-        };
-        this.waiters.push(waitFn(waitArgs));
-
-        return this;
-    }
-
-    //TODO : Test this behaviour
-    waitMode(mode: WaitMode) {
-        this.checkCallState();
-        this._waitMode = mode;
+    iterationMode(mode: WaitMode) {
+        this.waitMode = mode;
         return this;
     }
 }
@@ -152,14 +100,53 @@ export class UpdateWaiter {
  */
 export function createWaitForNextUpdate() {
     const subject = new Subject<UpdateEvent>();
-    const createWaiter = () => new UpdateWaiter(subject.asObservable());
+    const createWaiter = () => {
+        const {
+            executor,
+            promise: deferredPromise,
+        } = promiseWithExternalExecutor<void>();
+
+        const update$ = subject.pipe(
+            publishReplay(),
+        ) as ConnectableObservable<UpdateEvent>;
+        const subscription = update$.connect();
+
+        const waiter = new UpdateWaiter((resolve) => {
+            resolve(act(() => deferredPromise));
+        }, update$);
+
+        const execute = async () => {
+            await Promise.resolve();
+
+            if (waiter.waiters.length === 0) {
+                waiter.debounce();
+            }
+            waiter.executed = true;
+
+            const wait$ =
+                waiter.waitMode === "all"
+                    ? combineLatest(waiter.waiters)
+                    : race(waiter.waiters);
+
+            const error$ = update$.pipe(
+                filter((v) => v.error != null),
+                map((v) => {
+                    throw v.error;
+                }),
+            );
+
+            await waiter._actFn?.();
+            await race(error$, wait$).pipe(take(1)).toPromise();
+            subscription.unsubscribe();
+        };
+
+        executor.resolve(execute());
+
+        return waiter;
+    };
 
     return {
         updateSubject: subject,
         createWaiter,
-        clearSubject: () => {
-            const observers = subject.observers.splice(0);
-            observers.forEach((observer) => observer.complete());
-        },
     };
 }

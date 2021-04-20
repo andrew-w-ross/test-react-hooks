@@ -3,7 +3,6 @@ import type { TestRendererOptions } from "react-test-renderer";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
 import { RenderState } from "./RenderState";
-import type { UpdateWaiter } from "./updateWaiter";
 import { createWaitForNextUpdate } from "./updateWaiter";
 import { returnAct } from "./utils";
 
@@ -54,11 +53,7 @@ export function createTestProxy<THook extends TestHook>(
     hook: THook,
     { testRendererOptions, wrapper }: UseProxyOptions = {},
 ) {
-    const {
-        updateSubject,
-        clearSubject,
-        createWaiter,
-    } = createWaitForNextUpdate();
+    const { updateSubject, createWaiter } = createWaitForNextUpdate();
 
     let renderState = new RenderState(testRendererOptions);
     //Is the hook responding to a direct call from the user?
@@ -67,7 +62,6 @@ export function createTestProxy<THook extends TestHook>(
     const cleanup = () => {
         renderState.cleanup();
         renderState = new RenderState(testRendererOptions);
-        clearSubject();
     };
 
     /**
@@ -126,22 +120,11 @@ export function createTestProxy<THook extends TestHook>(
     };
 
     const control = {
-        get updateObserver() {
-            return updateSubject.asObservable();
-        },
         set wrapper(wrapperComponent: WrapperComponent | null | undefined) {
             wrapper = wrapperComponent ?? undefined;
         },
         unmount: () => renderState.unmount(),
-        waitForNextUpdate: (
-            config?: (waiter: UpdateWaiter) => void | UpdateWaiter,
-        ) => {
-            const waiter = createWaiter();
-            config?.(waiter);
-            return waiter.wait();
-        },
-
-        createWaiter,
+        waitForNextUpdate: () => createWaiter(),
     };
 
     return [renderHook, control] as const;

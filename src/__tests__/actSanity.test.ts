@@ -1,10 +1,5 @@
 import { act } from "react-test-renderer";
-
-//A bunch of sanity checks for the particulars of how act works.
-//If these start to fail then a bunch of assumptions are wrong.
-function testWait() {
-    return new Promise<void>((resolve) => setImmediate(resolve));
-}
+import { wait } from "../utils";
 
 it("will work with sync values", () => {
     let value = null;
@@ -17,7 +12,7 @@ it("will work with sync values", () => {
 it("will work with async values", async () => {
     let value = null;
     await act(async () => {
-        await testWait();
+        await wait();
         value = 1;
     });
     expect(value).toEqual(1);
@@ -36,7 +31,7 @@ it("throws sync error", async () => {
 it("throws async error", async () => {
     const testFn = async () => {
         await act(async () => {
-            await testWait();
+            await wait();
             throw new Error("async error");
         });
     };
@@ -54,7 +49,7 @@ it("gives an error if not awaited", async () => {
     const errorSpy = spyOn(console, "error");
     const actResult = act(() => Promise.resolve(undefined));
 
-    await testWait();
+    await wait();
     expect(errorSpy).toBeCalledWith(
         expect.stringContaining(
             "You called act(async () => ...) without await",
