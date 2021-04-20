@@ -1,12 +1,16 @@
 import { act } from "react-test-renderer";
-import type { Observable, SubscribableOrPromise } from "rxjs";
+import type {
+    ConnectableObservable,
+    Observable,
+    SubscribableOrPromise,
+} from "rxjs";
 import { combineLatest, race, Subject } from "rxjs";
 import {
     bufferCount,
     debounceTime,
     filter,
     map,
-    publish,
+    publishReplay,
     take,
 } from "rxjs/operators";
 import { promiseWithExternalExecutor } from "./utils";
@@ -33,8 +37,7 @@ export class UpdateWaiter extends Promise<void> {
     public executed = false;
     public waiters: SubscribableOrPromise<any>[] = [];
     public waitMode: WaitMode = "all";
-    public actFn?: () => any | Promise<any>;
-    public preActFn?: () => void;
+    public _actFn?: () => any | Promise<any>;
 
     constructor(
         executor: (
@@ -60,22 +63,12 @@ export class UpdateWaiter extends Promise<void> {
     }
 
     act(actFn: () => any | Promise<any>) {
-        if (this.actFn != null) {
+        if (this._actFn != null) {
             console.warn(
-                "actFn is already declared, overriding the current one",
+                "actFn is already defined, overriding the current one",
             );
         }
-        this.actFn = actFn;
-        return this;
-    }
-
-    preAct(preActFn: () => void) {
-        if (this.preActFn != null) {
-            console.warn(
-                "preActFn is already declared, overriding the current one",
-            );
-        }
-        this.preActFn = preActFn;
+        this._actFn = actFn;
         return this;
     }
 
@@ -112,41 +105,39 @@ export function createWaitForNextUpdate() {
             executor,
             promise: deferredPromise,
         } = promiseWithExternalExecutor<void>();
-        const updateObserver = publish<UpdateEvent>()(subject.asObservable());
+
+        const update$ = subject.pipe(
+            publishReplay(),
+        ) as ConnectableObservable<UpdateEvent>;
+        const subscription = update$.connect();
 
         const waiter = new UpdateWaiter((resolve) => {
-            resolve(deferredPromise);
-        }, updateObserver);
+            resolve(act(() => deferredPromise));
+        }, update$);
 
         const execute = async () => {
             await Promise.resolve();
 
-            const actPromise = act(async () => {
-                await waiter.actFn?.();
+            if (waiter.waiters.length === 0) {
+                waiter.debounce();
+            }
+            waiter.executed = true;
 
-                if (waiter.waiters.length === 0) {
-                    waiter.debounce();
-                }
+            const wait$ =
+                waiter.waitMode === "all"
+                    ? combineLatest(waiter.waiters)
+                    : race(waiter.waiters);
 
-                const waitStream =
-                    waiter.waitMode === "all"
-                        ? combineLatest(waiter.waiters)
-                        : race(waiter.waiters);
+            const error$ = update$.pipe(
+                filter((v) => v.error != null),
+                map((v) => {
+                    throw v.error;
+                }),
+            );
 
-                const errorStream = updateObserver.pipe(
-                    filter((v) => v.error != null),
-                    map((v) => {
-                        throw v.error;
-                    }),
-                );
-
-                await race(errorStream, waitStream).pipe(take(1)).toPromise();
-            });
-
-            updateObserver.connect();
-            waiter.preActFn?.();
-
-            await actPromise;
+            await waiter._actFn?.();
+            await race(error$, wait$).pipe(take(1)).toPromise();
+            subscription.unsubscribe();
         };
 
         executor.resolve(execute());
@@ -157,9 +148,5 @@ export function createWaitForNextUpdate() {
     return {
         updateSubject: subject,
         createWaiter,
-        clearSubject: () => {
-            const observers = subject.observers.splice(0);
-            observers.forEach((observer) => observer.complete());
-        },
     };
 }

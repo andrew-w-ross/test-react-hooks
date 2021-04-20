@@ -19,9 +19,8 @@ function useAsync(fn: () => Promise<any>) {
 
 const [prxAsync, control] = createTestProxy(useAsync);
 const prxySpy = () => Promise.resolve("foo");
-const errorSpy = jest.spyOn(console, "error");
 
-xit("will wait for update", async () => {
+it("will wait for update", async () => {
     {
         const { value, isLoading } = prxAsync(prxySpy);
         expect(value).toBeNull();
@@ -29,13 +28,10 @@ xit("will wait for update", async () => {
     }
 
     await control.waitForNextUpdate();
-    expect(errorSpy).not.toHaveBeenCalled();
 
     {
         const { value, isLoading } = prxAsync(prxySpy);
         expect(value).toBe("foo");
         expect(isLoading).toBe(false);
     }
-
-    expect(errorSpy).not.toHaveBeenCalled();
 });

@@ -3,6 +3,19 @@ import { wait } from "../utils";
 
 const resolveSpy = jest.fn();
 
+it("can be used as a fluent api", () => {
+    const { createWaiter } = createWaitForNextUpdate();
+
+    const waiter = createWaiter();
+    expect(waiter.waiters).toHaveLength(0);
+
+    waiter.debounce(10);
+    expect(waiter.waiters).toHaveLength(1);
+
+    waiter.updateCount(2);
+    expect(waiter.waiters).toHaveLength(2);
+});
+
 it("waitForNextUpdate.updateCount will wait for a specific amount of async update", async () => {
     const { updateSubject, createWaiter } = createWaitForNextUpdate();
     createWaiter().updateCount(2).then(resolveSpy);
@@ -118,7 +131,7 @@ it("will wait for all of the promises to resolve in race", async () => {
     expect(resolveSpy).toHaveBeenCalled();
 });
 
-xit("will throw if modified after wait", async () => {
+it("will throw if modified after wait", async () => {
     const { createWaiter } = createWaitForNextUpdate();
 
     const waiter = createWaiter();

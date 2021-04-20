@@ -40,21 +40,21 @@ it("can wait for single event", async () => {
     const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
 
     {
-        const value = prxBatchAsync(4);
+        const value = prxBatchAsync(5);
         expect(value).toEqual(0);
     }
 
-    await control.waitForNextUpdate().updateCount(1);
+    await control.waitForNextUpdate();
 
     {
-        const value = prxBatchAsync(4);
+        const value = prxBatchAsync();
         expect(value).toEqual(1);
     }
 
     await control.waitForNextUpdate().updateCount(1);
 
     {
-        const value = prxBatchAsync(4);
+        const value = prxBatchAsync();
         expect(value).toEqual(2);
     }
 });
@@ -70,7 +70,7 @@ it(`regardless of the throttleTime it'll still wait for the first change`, async
     await control.waitForNextUpdate();
 
     {
-        const value = prxBatchAsync(10);
+        const value = prxBatchAsync();
         expect(value).toBe(1);
     }
 

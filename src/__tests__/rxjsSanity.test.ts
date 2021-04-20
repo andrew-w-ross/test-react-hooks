@@ -1,5 +1,6 @@
+import type { ConnectableObservable } from "rxjs";
 import { Subject } from "rxjs";
-import { debounceTime, take } from "rxjs/operators";
+import { debounceTime, publish, publishReplay, take } from "rxjs/operators";
 
 /**
  * This sanity check file in general might seem a bit silly but there is a lot
@@ -79,4 +80,49 @@ it("debounceTime in modern timers needs an await to resolve", async () => {
 
     await jest.runOnlyPendingTimers();
     expect(resolveSpy).toHaveBeenCalledWith(5);
+});
+
+it("publish will not emit until connect is called", () => {
+    const nextSpy = jest.fn();
+
+    const connect$ = subject.pipe(publish()) as ConnectableObservable<number>;
+    connect$.subscribe({
+        next: nextSpy,
+    });
+
+    subject.next(1);
+    expect(nextSpy).not.toHaveBeenCalled();
+
+    const subscription = connect$.connect();
+    subject.next(2);
+    expect(nextSpy).toHaveBeenCalledWith(2);
+
+    subscription.unsubscribe();
+    subject.next(3);
+    expect(nextSpy).not.toHaveBeenCalledWith(3);
+});
+
+it("publishReplay will replay with connected", () => {
+    const nextSpy = jest.fn();
+
+    const replay$ = subject
+        .asObservable()
+        .pipe(publishReplay()) as ConnectableObservable<number>;
+
+    const subscription = replay$.connect();
+
+    subject.next(1);
+    subject.next(2);
+    subject.next(3);
+
+    replay$.subscribe({
+        next: nextSpy,
+    });
+
+    expect(nextSpy).toHaveBeenCalledTimes(3);
+
+    subscription.unsubscribe();
+
+    subject.next(4);
+    expect(nextSpy).not.toHaveBeenCalledWith(4);
 });

@@ -53,11 +53,7 @@ export function createTestProxy<THook extends TestHook>(
     hook: THook,
     { testRendererOptions, wrapper }: UseProxyOptions = {},
 ) {
-    const {
-        updateSubject,
-        clearSubject,
-        createWaiter,
-    } = createWaitForNextUpdate();
+    const { updateSubject, createWaiter } = createWaitForNextUpdate();
 
     let renderState = new RenderState(testRendererOptions);
     //Is the hook responding to a direct call from the user?
@@ -66,7 +62,6 @@ export function createTestProxy<THook extends TestHook>(
     const cleanup = () => {
         renderState.cleanup();
         renderState = new RenderState(testRendererOptions);
-        clearSubject();
     };
 
     /**
@@ -125,9 +120,6 @@ export function createTestProxy<THook extends TestHook>(
     };
 
     const control = {
-        get updateObserver() {
-            return updateSubject.asObservable();
-        },
         set wrapper(wrapperComponent: WrapperComponent | null | undefined) {
             wrapper = wrapperComponent ?? undefined;
         },
