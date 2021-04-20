@@ -25,7 +25,7 @@ afterEach(() => {
     jest.useRealTimers();
 });
 
-it("can use proxy timer in waiter fn", async () => {
+xit("can use proxy timer in waiter fn", async () => {
     const [prxWaits, control] = createTestProxy(useWaits);
 
     {
@@ -54,7 +54,7 @@ it("can use proxy timer in waiter fn", async () => {
     expect(errorSpy).not.toHaveBeenCalled();
 });
 
-it("running all pending timers will skip to the end", async () => {
+xit("running all pending timers will skip to the end", async () => {
     const [prxWaits, control] = createTestProxy(useWaits);
 
     {

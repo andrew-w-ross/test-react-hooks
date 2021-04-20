@@ -135,7 +135,6 @@ export function createWaitForNextUpdate() {
                 }),
             );
 
-            waiter.executed = true;
             const execution = race(errorStream, waitStream)
                 .pipe(take(1))
                 .toPromise();
@@ -151,7 +150,7 @@ export function createWaitForNextUpdate() {
             return actPromise;
         };
 
-        Promise.resolve().then(() => executor.resolve(execute()));
+        executor.resolve(execute());
 
         return waiter;
     };
