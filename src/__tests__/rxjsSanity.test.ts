@@ -6,6 +6,9 @@ import { debounceTime, publish, publishReplay, take } from "rxjs/operators";
  * This sanity check file in general might seem a bit silly but there is a lot
  * of specific behavior that must hold true for the rest of this library to work.
  * Hopefully these tests will work as a canary in a coal mine if the behavior for rxjs changes.
+ *
+ * Also I am horrible at rxjs, it seems like a pile of foot guns to me but it's super useful.
+ * If you're experienced at rxjs please open an issue and suggest improvements or better yet make a pr, I'd really appreciate it.
  */
 afterEach(() => {
     jest.useRealTimers();
