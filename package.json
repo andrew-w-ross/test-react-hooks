@@ -46,6 +46,9 @@
         "prepublishOnly": "yarn run check && yarn build"
     },
     "jest": {
+        "setupFilesAfterEnv": [
+            "<rootDir>/src/jest.setup.ts"
+        ],
         "clearMocks": true,
         "preset": "ts-jest",
         "roots": [

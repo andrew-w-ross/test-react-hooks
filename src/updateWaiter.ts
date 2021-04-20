@@ -119,35 +119,34 @@ export function createWaitForNextUpdate() {
         }, updateObserver);
 
         const execute = async () => {
-            if (waiter.waiters.length === 0) {
-                waiter.debounce();
-            }
-
-            const waitStream =
-                waiter.waitMode === "all"
-                    ? combineLatest(waiter.waiters)
-                    : race(waiter.waiters);
-
-            const errorStream = updateObserver.pipe(
-                filter((v) => v.error != null),
-                map((v) => {
-                    throw v.error;
-                }),
-            );
-
-            const execution = race(errorStream, waitStream)
-                .pipe(take(1))
-                .toPromise();
+            await Promise.resolve();
 
             const actPromise = act(async () => {
                 await waiter.actFn?.();
-                await execution;
+
+                if (waiter.waiters.length === 0) {
+                    waiter.debounce();
+                }
+
+                const waitStream =
+                    waiter.waitMode === "all"
+                        ? combineLatest(waiter.waiters)
+                        : race(waiter.waiters);
+
+                const errorStream = updateObserver.pipe(
+                    filter((v) => v.error != null),
+                    map((v) => {
+                        throw v.error;
+                    }),
+                );
+
+                await race(errorStream, waitStream).pipe(take(1)).toPromise();
             });
 
             updateObserver.connect();
             waiter.preActFn?.();
 
-            return actPromise;
+            await actPromise;
         };
 
         executor.resolve(execute());

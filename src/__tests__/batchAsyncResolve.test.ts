@@ -21,9 +21,6 @@ function useBatchAsync(ms = 1) {
     return value;
 }
 
-//If we failed to wrap async changes in act then it complains, just watching to make sure that didn't happen.
-const errorSpy = jest.spyOn(console, "error");
-
 it("by default will wait for 2ms to pass before resoving", async () => {
     const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
     {
@@ -37,8 +34,6 @@ it("by default will wait for 2ms to pass before resoving", async () => {
         const value = prxBatchAsync();
         expect(value).toEqual(2);
     }
-
-    expect(errorSpy).not.toHaveBeenCalled();
 });
 
 it("can wait for single event", async () => {
@@ -62,7 +57,6 @@ it("can wait for single event", async () => {
         const value = prxBatchAsync(4);
         expect(value).toEqual(2);
     }
-    expect(errorSpy).not.toHaveBeenCalled();
 });
 
 it(`regardless of the throttleTime it'll still wait for the first change`, async () => {
@@ -81,6 +75,4 @@ it(`regardless of the throttleTime it'll still wait for the first change`, async
     }
 
     await control.waitForNextUpdate();
-
-    expect(errorSpy).not.toHaveBeenCalled();
 });
