@@ -16,7 +16,7 @@ function useBatchAsync(ms) {
             }
         };
 
-        doStuff();        
+        doStuff();
     }, [ms]);
 
     return value;
@@ -40,7 +40,7 @@ it("wait for next update by default will debounce for 2ms", async () => {
     }
 });
 
-it("can wait for a specific amount of updates", () => {
+it("can wait for a specific amount of updates", async () => {
     {
         const value = prxBatchAsync(5);
         expect(value).toBe(0);
@@ -66,7 +66,7 @@ it("can wait for a specific amount of updates", () => {
     }
 });
 
-it('will wait for at least one update event', () => {
+it("will wait for at least one update event", async () => {
     const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
 
     {
