@@ -7,14 +7,14 @@ function useBatchAsync(ms = 1) {
     const [value, setValue] = useState(0);
 
     useEffect(() => {
-        const doStuff = async () => {
-            for (let i = 0; i < 2; i++) {
+        const run = async () => {
+            for (let i = 0; i < 3; i++) {
                 await wait(ms);
                 setValue((v) => v + 1);
             }
         };
 
-        doStuff();
+        run();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -32,7 +32,7 @@ it("by default will wait for 2ms to pass before resoving", async () => {
 
     {
         const value = prxBatchAsync();
-        expect(value).toEqual(2);
+        expect(value).toEqual(3);
     }
 });
 
@@ -44,18 +44,18 @@ it("can wait for single event", async () => {
         expect(value).toEqual(0);
     }
 
-    await control.waitForNextUpdate();
+    await control.waitForNextUpdate().updateCount(1);
 
     {
         const value = prxBatchAsync();
         expect(value).toEqual(1);
     }
 
-    await control.waitForNextUpdate().updateCount(1);
+    await control.waitForNextUpdate().updateCount(2);
 
     {
         const value = prxBatchAsync();
-        expect(value).toEqual(2);
+        expect(value).toEqual(3);
     }
 });
 
@@ -73,6 +73,4 @@ it(`regardless of the throttleTime it'll still wait for the first change`, async
         const value = prxBatchAsync();
         expect(value).toBe(1);
     }
-
-    await control.waitForNextUpdate();
 });

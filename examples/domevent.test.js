@@ -1,8 +1,6 @@
 import { useEffect } from "react";
-import { createTestProxy, cleanUp, act } from "test-react-hooks";
+import { createTestProxy, act } from "test-react-hooks";
 import { createSandboxClickEvent } from "./util";
-
-afterEach(() => cleanUp());
 
 //Taken from https://usehooks.com/useOnClickOutside/
 function useOnClickOutside(ref, handler) {
@@ -22,7 +20,7 @@ function useOnClickOutside(ref, handler) {
     }, [ref, handler]);
 }
 
-const [prxClickOutside, control] = createTestProxy(useOnClickOutside);
+const [prxClickOutside] = createTestProxy(useOnClickOutside);
 const spy = jest.fn();
 
 afterEach(() => jest.clearAllMocks());

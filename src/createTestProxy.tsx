@@ -32,8 +32,18 @@ const DefaultWrapper: WrapperComponent = ({ children }) => <>{children}</>;
 
 export type TestHook = (...args: any[]) => any;
 
-export type UseProxyOptions = {
+/**
+ * Options for @see createTestProxy
+ */
+export type CreateTestProxyOptions = {
+    /**
+     * Options that are forwared to @see {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
+     */
     testRendererOptions?: TestRendererOptions;
+
+    /**
+     * Wrapper component for the hook callback, make sure children is rendered
+     */
     wrapper?: WrapperComponent;
 };
 
@@ -44,14 +54,13 @@ export type UseProxyOptions = {
  *
  * @export
  * @template THook
- * @template TProps
- * @param {THook} hook
- * @param {UseProxyOptions<TProps>} [options={}]
+ * @param {THook} hook to proxy
+ * @param {CreateTestProxyOptions} [options={}]
  * @returns {[THook, HookControl<TProps>]}
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { testRendererOptions, wrapper }: UseProxyOptions = {},
+    { testRendererOptions, wrapper }: CreateTestProxyOptions = {},
 ) {
     const { updateSubject, createWaiter } = createWaitForNextUpdate();
 
@@ -120,10 +129,23 @@ export function createTestProxy<THook extends TestHook>(
     };
 
     const control = {
+        /**
+         * Sets the wrapper, passing in null or undefined will use the default wrapper.
+         * Setting this does not force a render.
+         */
         set wrapper(wrapperComponent: WrapperComponent | null | undefined) {
             wrapper = wrapperComponent ?? undefined;
         },
+
+        /**
+         * Unmount the current component.
+         */
         unmount: () => renderState.unmount(),
+
+        /**
+         * Creates an @see UpdateWaiter that by default will wait for the component to stop updating for `2ms`.
+         * @returns UpdateWaiter
+         */
         waitForNextUpdate: () => createWaiter(),
     };
 

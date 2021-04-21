@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { createTestProxy, cleanUp } from "test-react-hooks";
-
-afterEach(() => cleanUp());
+import { createTestProxy } from "test-react-hooks";
 
 function useAsync(fn) {
     const [value, setValue] = useState(null);
@@ -20,15 +18,17 @@ function useAsync(fn) {
 }
 
 const [prxAsync, control] = createTestProxy(useAsync);
-const prxySpy = jest.fn(() => Promise.resolve("foo"));
 
 it("will wait for update", async () => {
+    const prxySpy = jest.fn(() => Promise.resolve("foo"));
+
     {
         const { value, isLoading } = prxAsync(prxySpy);
         expect(value).toBeNull();
         expect(isLoading).toBe(true);
     }
 
+    //Wait for next update will wait for the next time the component updates
     await control.waitForNextUpdate();
 
     {
