@@ -1,8 +1,5 @@
-import { createTestProxy, cleanUp } from "test-react-hooks";
+import { createTestProxy } from "test-react-hooks";
 import { useState } from "react";
-
-//Cleans up the dom container that's created during testing
-afterEach(() => cleanUp());
 
 // Create your hook
 const useCounter = (initial = 0, inc = 1) => {

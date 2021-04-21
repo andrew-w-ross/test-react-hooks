@@ -58,9 +58,11 @@
         "testTimeout": 200
     },
     "keywords": [
+        "testing",
         "react",
         "hooks",
-        "testing",
+        "react-native",
+        "unit",
         "react-hooks"
     ],
     "dependencies": {

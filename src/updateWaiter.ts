@@ -31,7 +31,7 @@ export class AlreadyExecutedError extends Error {
 }
 
 /**
- * Fluent api for
+ * UpdateWaiter is a fluent api that will resolve when it's conditions are met.
  */
 export class UpdateWaiter extends Promise<void> {
     public executed = false;
@@ -49,6 +49,14 @@ export class UpdateWaiter extends Promise<void> {
         super(executor);
     }
 
+    /**
+     * @param waitFn function that takes in an {Observable<UpdateEvent>} and returns an {Observable<any>} or a {Promise}
+     * @example
+     * ```typescript
+     * //Wait for 10ms
+     * createWaiter().addWaiter((updateObserver) => new Promise((resolve) => setTimeout(resolve, 10)));
+     * ```
+     */
     addWaiter(
         waitFn: (
             updateObserver: Observable<UpdateEvent>,
@@ -62,6 +70,10 @@ export class UpdateWaiter extends Promise<void> {
         return this;
     }
 
+    /**
+     * Function that is called before waiting starts, wrapper in act.
+     * @param actFn
+     */
     act(actFn: () => any | Promise<any>) {
         if (this._actFn != null) {
             console.warn(
@@ -72,6 +84,10 @@ export class UpdateWaiter extends Promise<void> {
         return this;
     }
 
+    /**
+     * Waits for the updates to stop for a certain amount of time before stopping.
+     * @param ms - Time to wait in ms
+     */
     debounce = (ms = 2) =>
         this.addWaiter((update$) =>
             update$.pipe(
@@ -80,6 +96,10 @@ export class UpdateWaiter extends Promise<void> {
             ),
         );
 
+    /**
+     * Waits for a certain amount of updates before resolving.
+     * @param count - Amount of update to wait for.
+     */
     updateCount = (count = 1) =>
         this.addWaiter((update$) =>
             update$.pipe(
@@ -88,6 +108,10 @@ export class UpdateWaiter extends Promise<void> {
             ),
         );
 
+    /**
+     * If there is more than one condition how should they be handled
+     * @param mode - is either the string 'race' or 'all' if 'race' will wait for one to resolve if 'all' waits for all to resolve.
+     */
     iterationMode(mode: WaitMode) {
         this.waitMode = mode;
         return this;
