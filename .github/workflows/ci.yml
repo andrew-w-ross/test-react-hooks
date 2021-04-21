@@ -3,6 +3,17 @@ on:
   pull_request:
     branches: [master, 'releases/*']
 jobs:
+  check:
+    name: Check Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Check Version
+        run: yarn version check 
+
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -11,7 +22,7 @@ jobs:
     name: Test Node V${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2
-
+      
       - name: Setup node
         uses: actions/setup-node@v1
         with:
@@ -29,14 +40,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
+      - name: install
+        run: yarn
+      
+      - name: build
+        run: yarn build
 
-      - name: Build, Lint and Test
-        run: |
-          yarn
-          yarn run check
-          yarn build
-          yarn test
-          
+      - name: lint
+        run: yarn lint
+
+      - name: test
+        run: yarn test          
 
       - name: Link Package
         working-directory: ./examples
