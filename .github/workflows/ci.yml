@@ -3,6 +3,15 @@ on:
   pull_request:
     branches: [master, 'releases/*']
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        depth: 0
+
+      - name: Check Version
+        run: yarn version check 
+
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -11,10 +20,7 @@ jobs:
     name: Test Node V${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2
-
-      - name: Check Version
-        run: yarn version check
-
+      
       - name: Setup node
         uses: actions/setup-node@v1
         with:
