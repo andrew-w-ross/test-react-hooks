@@ -1,15 +1,20 @@
 name: Publish
-on: workflow_dispatch
+on:
+  release:
+    types: [created]      
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+            fetch-depth: 0
 
       - name: Setup node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: "14"
+          registry-url: 'https://registry.npmjs.org'          
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -23,11 +28,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - run: |
-          yarn          
-          yarn test
+      - name: install
+        run: yarn
+      
+      - name: build
+        run: yarn build     
 
-      - name: Publish
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
+      - name: test
+        run: yarn test
+
+      - name: created event payload
+        run: echo ${{toJON(github.event)}}
+
+      # - name: publish
+      #   run: yarn npm publish --access public --tag 
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
