@@ -11,8 +11,8 @@
     "author": "Andrew Ross <rossirsa@gmail.com>",
     "license": "MIT",
     "peerDependencies": {
-        "react": ">= 16.8.0",
-        "react-test-renderer": ">= 16.8.0"
+        "react": ">= 16.14.0",
+        "react-test-renderer": ">= 16.14.0"
     },
     "devDependencies": {
         "@types/jest": "26.0.22",
