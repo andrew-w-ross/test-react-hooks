@@ -1,22 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createTestProxy } from "test-react-hooks";
 
 import { wait } from "./util";
 
 //This hook will return the number of times it's updated to a maximum of 3
 //The ms argument is the wait time between updates
-function useBatchAsync(ms) {
+function useBatchAsync(ms = 0) {
     const [value, setValue] = useState(0);
+    const mounted = useRef(true);
 
     useEffect(() => {
-        const doStuff = async () => {
+        const run = async () => {
             for (let i = 0; i < 3; i++) {
                 await wait(ms);
+                if (!mounted.current) return;
                 setValue((v) => v + 1);
             }
         };
 
-        doStuff();
+        run();
+        return () => {
+            mounted.current = false;
+        };
     }, [ms]);
 
     return value;

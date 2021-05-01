@@ -26,20 +26,12 @@ function useError(when: ThrowWhen, deps: any[] = []) {
 
 const [prxError, control] = createTestProxy(useError);
 
-const errorSpy = jest.spyOn(console, "error");
-
 it("will throw straight away", () => {
     expect(() => prxError("render")).toThrowError("render");
-    expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("The above error occurred in the"),
-    );
 });
 
 it("will throw after mount", () => {
     expect(() => prxError("aftermount")).toThrowError("aftermount");
-    expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("The above error occurred in the"),
-    );
 });
 
 it("will throw on unmount", () => {
@@ -50,7 +42,4 @@ it("will throw on unmount", () => {
 it("will throw on deps change", () => {
     prxError("unmount", [1]);
     expect(() => prxError("unmount", [2])).toThrowError();
-    expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("The above error occurred in the"),
-    );
 });
