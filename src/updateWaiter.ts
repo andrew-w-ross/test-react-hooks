@@ -71,7 +71,7 @@ export class UpdateWaiter extends Promise<void> {
     }
 
     /**
-     * Function that is called before waiting starts, wrapper in act.
+     * Function that is called before waiting starts, wrapped in act.
      * @param actFn
      */
     act(actFn: () => any | Promise<any>) {
@@ -122,9 +122,45 @@ export class UpdateWaiter extends Promise<void> {
  * Creates the subject and the waiter function for
  * @returns
  */
-export function createWaitForNextUpdate() {
+export function createUpdateStream() {
     const subject = new Subject<UpdateEvent>();
-    const createWaiter = () => {
+
+    function captureErrors() {
+        let caughtError: null | Error = null;
+        const subscription = subject
+            .pipe(
+                filter((update) => update.error != null),
+                take(1),
+            )
+            .subscribe({
+                next(err) {
+                    caughtError = err.error!;
+                },
+            });
+
+        return () => {
+            subscription.unsubscribe();
+            if (caughtError) {
+                throw caughtError;
+            }
+        };
+    }
+
+    function hoistError<TResult>(fn: () => TResult) {
+        const done = captureErrors();
+        const result = fn();
+        done();
+        return result;
+    }
+
+    async function hoistErrorAsync<TResult>(fn: () => Promise<TResult>) {
+        const done = captureErrors();
+        const result = await fn();
+        done();
+        return result;
+    }
+
+    function createWaiter() {
         const {
             executor,
             promise: deferredPromise,
@@ -167,10 +203,12 @@ export function createWaitForNextUpdate() {
         executor.resolve(execute());
 
         return waiter;
-    };
+    }
 
     return {
         updateSubject: subject,
         createWaiter,
+        hoistError,
+        hoistErrorAsync,
     };
 }

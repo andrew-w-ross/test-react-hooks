@@ -1,10 +1,10 @@
-import { createWaitForNextUpdate } from "../updateWaiter";
+import { createUpdateStream } from "../updateWaiter";
 import { wait } from "../utils";
 
 const resolveSpy = jest.fn();
 
 it("can be used as a fluent api", () => {
-    const { createWaiter } = createWaitForNextUpdate();
+    const { createWaiter } = createUpdateStream();
 
     const waiter = createWaiter();
     expect(waiter.waiters).toHaveLength(0);
@@ -17,7 +17,7 @@ it("can be used as a fluent api", () => {
 });
 
 it("waitForNextUpdate.updateCount will wait for a specific amount of async update", async () => {
-    const { updateSubject, createWaiter } = createWaitForNextUpdate();
+    const { updateSubject, createWaiter } = createUpdateStream();
     createWaiter().updateCount(2).then(resolveSpy);
 
     updateSubject.next({ async: false });
@@ -35,7 +35,7 @@ it("waitForNextUpdate.updateCount will wait for a specific amount of async updat
 });
 
 it("waitForNextUpdate.debounce can debounce on async events", async () => {
-    const { updateSubject, createWaiter } = createWaitForNextUpdate();
+    const { updateSubject, createWaiter } = createUpdateStream();
     createWaiter().debounce(10).then(resolveSpy);
 
     updateSubject.next({ async: true });
@@ -51,7 +51,7 @@ it("waitForNextUpdate.debounce can debounce on async events", async () => {
 });
 
 it("by default use debounce function", async () => {
-    const { createWaiter } = createWaitForNextUpdate();
+    const { createWaiter } = createUpdateStream();
 
     const updateWaiter = createWaiter();
     const debounceSpy = jest.spyOn(updateWaiter, "debounce");
@@ -64,7 +64,7 @@ it("by default use debounce function", async () => {
 });
 
 it("will throw if an error is piped through", async () => {
-    const { createWaiter, updateSubject } = createWaitForNextUpdate();
+    const { createWaiter, updateSubject } = createUpdateStream();
 
     const waitPromise = createWaiter();
     //Force execution
@@ -77,7 +77,7 @@ it("will throw if an error is piped through", async () => {
 });
 
 it("will throw if an error occures during act", async () => {
-    const { createWaiter } = createWaitForNextUpdate();
+    const { createWaiter } = createUpdateStream();
 
     const updateWait = createWaiter().act(() => {
         throw new Error("boom");
@@ -88,7 +88,7 @@ it("will throw if an error occures during act", async () => {
 
 it("will warn if act function is overriden", () => {
     const errorSpy = jest.spyOn(console, "warn");
-    const { createWaiter } = createWaitForNextUpdate();
+    const { createWaiter } = createUpdateStream();
 
     const updateWaiter = createWaiter().act(() => {});
     expect(errorSpy).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ it("will warn if act function is overriden", () => {
 });
 
 it("will wait for one of the promises to resolve in race", async () => {
-    const { createWaiter, updateSubject } = createWaitForNextUpdate();
+    const { createWaiter, updateSubject } = createUpdateStream();
 
     createWaiter()
         .iterationMode("race")
@@ -117,7 +117,7 @@ it("will wait for one of the promises to resolve in race", async () => {
 });
 
 it("will wait for all of the promises to resolve in race", async () => {
-    const { createWaiter, updateSubject } = createWaitForNextUpdate();
+    const { createWaiter, updateSubject } = createUpdateStream();
 
     createWaiter().iterationMode("all").updateCount(2).then(resolveSpy);
     await wait();
@@ -132,7 +132,7 @@ it("will wait for all of the promises to resolve in race", async () => {
 });
 
 it("will throw if modified after wait", async () => {
-    const { createWaiter } = createWaitForNextUpdate();
+    const { createWaiter } = createUpdateStream();
 
     const waiter = createWaiter();
     await Promise.resolve();

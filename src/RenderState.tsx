@@ -4,24 +4,26 @@ import type {
     TestRendererOptions,
 } from "react-test-renderer";
 import { act, create } from "react-test-renderer";
+import type { Subject } from "rxjs";
 import { ErrorBoundary } from "./ErrorBoundary";
+import type { UpdateEvent } from "./updateWaiter";
 import { randomNumber } from "./utils";
 
 export class RenderState {
     private key = randomNumber() + "";
     private reactTestRenderer: ReactTestRenderer | null = null;
     private element?: ReactElement;
-    public caughtError?: Error;
 
-    constructor(private testRendererOptions?: TestRendererOptions) {}
+    constructor(
+        private updateSubject: Subject<UpdateEvent>,
+        private testRendererOptions?: TestRendererOptions,
+    ) {}
 
     render(element: ReactElement) {
         this.element = (
             <ErrorBoundary
+                onError={(error) => this.updateSubject.next({ error })}
                 key={this.key}
-                onError={(error) => {
-                    this.caughtError = error;
-                }}
             >
                 {element}
             </ErrorBoundary>
@@ -38,8 +40,6 @@ export class RenderState {
                 this.reactTestRenderer.update(this.element);
             }
         });
-
-        if (this.caughtError) throw this.caughtError;
     }
 
     unmount() {
@@ -47,12 +47,5 @@ export class RenderState {
             this.reactTestRenderer?.unmount();
         });
         this.reactTestRenderer = null;
-        if (this.caughtError) throw this.caughtError;
-    }
-
-    cleanup() {
-        try {
-            this.unmount();
-        } catch (err) {}
     }
 }

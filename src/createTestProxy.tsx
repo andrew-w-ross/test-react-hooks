@@ -3,7 +3,7 @@ import type { TestRendererOptions } from "react-test-renderer";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
 import { RenderState } from "./RenderState";
-import { createWaitForNextUpdate } from "./updateWaiter";
+import { createUpdateStream } from "./updateWaiter";
 import { returnAct } from "./utils";
 
 const cleanUpFns: Function[] = [];
@@ -62,67 +62,57 @@ export function createTestProxy<THook extends TestHook>(
     hook: THook,
     { testRendererOptions, wrapper }: CreateTestProxyOptions = {},
 ) {
-    const { updateSubject, createWaiter } = createWaitForNextUpdate();
+    const { updateSubject, createWaiter, hoistError } = createUpdateStream();
 
-    let renderState = new RenderState(testRendererOptions);
-    //Is the hook responding to a direct call from the user?
-    let respondingToApply = false;
+    let renderState = new RenderState(updateSubject, testRendererOptions);
 
     const cleanup = () => {
-        renderState.cleanup();
-        renderState = new RenderState(testRendererOptions);
+        renderState.unmount();
+        renderState = new RenderState(updateSubject, testRendererOptions);
     };
 
     /**
      * Function that will ensure a function and all it's returned memebers are wrapped in act
      */
     const wrapApplyAct: WrapApplyFn = (...args) => {
-        respondingToApply = true;
-        const result = returnAct(() => Reflect.apply(...args));
-        respondingToApply = false;
-        if (renderState.caughtError) throw renderState.caughtError;
-        return result;
+        return hoistError(() => returnAct(() => Reflect.apply(...args)));
     };
 
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
 
     //@ts-expect-error
     const renderHook: THook = (...params: Parameters<THook>) => {
-        respondingToApply = true;
         if (!cleanUpFns.includes(cleanup)) {
             cleanUpFns.push(cleanup);
         }
         let result: ReturnType<TestHook> | undefined = undefined;
 
-        try {
-            let isAsync = false;
-            const Wrapper = wrapper ?? DefaultWrapper;
+        let isAsync = false;
+        const Wrapper = wrapper ?? DefaultWrapper;
 
-            const callback = () => {
-                try {
-                    result = proxiedHook(...params);
-                    updateSubject.next({ async: isAsync });
-                } catch (error) {
-                    if (!isAsync || respondingToApply) throw error;
-                    updateSubject.next({ error });
-                } finally {
-                    isAsync = true;
-                }
-            };
+        const callback = () => {
+            try {
+                result = proxiedHook(...params);
+                updateSubject.next({ async: isAsync });
+            } catch (error) {
+                updateSubject.next({ error });
+            } finally {
+                isAsync = true;
+            }
+        };
 
+        hoistError(() =>
             renderState.render(
                 <Wrapper>
                     <CallbackComponent callback={callback} />
                 </Wrapper>,
-            );
+            ),
+        );
 
-            if (!isAsync) {
-                console.warn(
-                    "Check the code for your wrapper, it should render the children prop",
-                );
-            }
-        } finally {
-            respondingToApply = false;
+        if (!isAsync) {
+            console.warn(
+                "Check the code for your wrapper, it should render the children prop",
+            );
         }
 
         return result!;
@@ -140,7 +130,7 @@ export function createTestProxy<THook extends TestHook>(
         /**
          * Unmount the current component.
          */
-        unmount: () => renderState.unmount(),
+        unmount: () => hoistError(() => renderState.unmount()),
 
         /**
          * Creates an @see UpdateWaiter that by default will wait for the component to stop updating for `2ms`.
