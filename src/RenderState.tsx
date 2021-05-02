@@ -1,4 +1,5 @@
-import type { ReactElement } from "react";
+import { version } from "react";
+import type { ReactElement, ReactNode } from "react";
 import type {
     ReactTestRenderer,
     TestRendererOptions,
@@ -19,7 +20,7 @@ export class RenderState {
         private testRendererOptions?: TestRendererOptions,
     ) {}
 
-    render(element: ReactElement) {
+    render(element: ReactNode) {
         this.element = (
             <ErrorBoundary
                 onError={(error) => this.updateSubject.next({ error })}
@@ -43,6 +44,10 @@ export class RenderState {
     }
 
     unmount() {
+        if (version.startsWith("16")) {
+            //Needed for react@16.14
+            this.render(null);
+        }
         act(() => {
             this.reactTestRenderer?.unmount();
         });
