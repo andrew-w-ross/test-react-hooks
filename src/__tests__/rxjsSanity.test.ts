@@ -1,6 +1,5 @@
-import type { ConnectableObservable } from "rxjs";
-import { Subject } from "rxjs";
-import { debounceTime, publish, publishReplay, take } from "rxjs/operators";
+import { connectable, firstValueFrom, ReplaySubject, Subject } from "rxjs";
+import { debounceTime } from "rxjs/operators";
 
 /**
  * This sanity check file in general might seem a bit silly but there is a lot
@@ -18,7 +17,7 @@ const subject = new Subject<number>();
 const resolveSpy = jest.fn();
 
 it("toPromise will resolve with queueMicrotask", async () => {
-    subject.pipe(take(1)).toPromise().then(resolveSpy);
+    firstValueFrom(subject).then(resolveSpy);
 
     subject.next(1);
     expect(resolveSpy).not.toHaveBeenCalled();
@@ -29,7 +28,7 @@ it("toPromise will resolve with queueMicrotask", async () => {
 });
 
 it("toPromise will resolve with process.nextTick", (done) => {
-    subject.pipe(take(1)).toPromise().then(resolveSpy);
+    firstValueFrom(subject).then(resolveSpy);
 
     subject.next(2);
     expect(resolveSpy).not.toHaveBeenCalled();
@@ -42,7 +41,7 @@ it("toPromise will resolve with process.nextTick", (done) => {
 
 //We can assume setTimeout will work after this point
 it("toPromise will resolve with setImmediate", (done) => {
-    subject.pipe(take(1)).toPromise().then(resolveSpy);
+    firstValueFrom(subject).then(resolveSpy);
 
     subject.next(3);
     expect(resolveSpy).not.toHaveBeenCalled();
@@ -54,7 +53,7 @@ it("toPromise will resolve with setImmediate", (done) => {
 });
 
 it("toPromise will resolve with an await", async () => {
-    subject.pipe(take(1)).toPromise().then(resolveSpy);
+    firstValueFrom(subject).then(resolveSpy);
 
     subject.next(4);
     expect(resolveSpy).not.toHaveBeenCalled();
@@ -65,18 +64,18 @@ it("toPromise will resolve with an await", async () => {
 
 it("debounceTime in legacy timers needs an await to resolve", async () => {
     jest.useFakeTimers("legacy");
-    subject.pipe(debounceTime(10)).pipe(take(1)).toPromise().then(resolveSpy);
+    firstValueFrom(subject.pipe(debounceTime(10))).then(resolveSpy);
 
     subject.next(5);
     expect(resolveSpy).not.toHaveBeenCalled();
 
-    await jest.runOnlyPendingTimers();
+    await jest.runAllTimers();
     expect(resolveSpy).toHaveBeenCalledWith(5);
 });
 
 it("debounceTime in modern timers needs an await to resolve", async () => {
     jest.useFakeTimers("modern");
-    subject.pipe(debounceTime(10)).pipe(take(1)).toPromise().then(resolveSpy);
+    firstValueFrom(subject.pipe(debounceTime(10))).then(resolveSpy);
 
     subject.next(5);
     expect(resolveSpy).not.toHaveBeenCalled();
@@ -88,7 +87,9 @@ it("debounceTime in modern timers needs an await to resolve", async () => {
 it("publish will not emit until connect is called", () => {
     const nextSpy = jest.fn();
 
-    const connect$ = subject.pipe(publish()) as ConnectableObservable<number>;
+    const connect$ = connectable(subject, {
+        connector: () => new Subject<number>(),
+    });
     connect$.subscribe({
         next: nextSpy,
     });
@@ -108,9 +109,9 @@ it("publish will not emit until connect is called", () => {
 it("publishReplay will replay with connected", () => {
     const nextSpy = jest.fn();
 
-    const replay$ = subject
-        .asObservable()
-        .pipe(publishReplay()) as ConnectableObservable<number>;
+    const replay$ = connectable(subject, {
+        connector: () => new ReplaySubject<number>(),
+    });
 
     const subscription = replay$.connect();
 
