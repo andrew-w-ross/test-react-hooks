@@ -53,14 +53,10 @@ jobs:
         run: |
           yarn link ../
           yarn
-
-      - name: Set Version
-        run: |
-          yarn add react@${{ matrix.version }}
-          yarn add react-test-renderer@${{ matrix.version }}
-        if: ${{ matrix.version != 'latest' }}
+        if: ${{ matrix.version == 'latest' }}
 
       - name: Test examples
         working-directory: ./examples
         run: yarn jest
+        if: ${{ matrix.version == 'latest' }}
           
