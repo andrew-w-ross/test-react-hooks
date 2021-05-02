@@ -10,6 +10,9 @@
     "repository": "git@github.com:andrew-w-ross/test-react-hooks.git",
     "author": "Andrew Ross <rossirsa@gmail.com>",
     "license": "MIT",
+    "engines": {
+        "node": ">= 12"
+    },
     "peerDependencies": {
         "react": ">= 16.14.0",
         "react-test-renderer": ">= 16.14.0"
