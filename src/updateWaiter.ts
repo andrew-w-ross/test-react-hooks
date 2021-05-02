@@ -1,18 +1,14 @@
 import { act } from "react-test-renderer";
-import type {
-    ConnectableObservable,
-    Observable,
-    SubscribableOrPromise,
-} from "rxjs";
-import { combineLatest, race, Subject } from "rxjs";
+import type { Observable, ObservableInput } from "rxjs";
 import {
-    bufferCount,
-    debounceTime,
-    filter,
-    map,
-    publishReplay,
-    take,
-} from "rxjs/operators";
+    combineLatest,
+    connectable,
+    firstValueFrom,
+    race,
+    ReplaySubject,
+    Subject,
+} from "rxjs";
+import { bufferCount, debounceTime, filter, map, take } from "rxjs/operators";
 import { promiseWithExternalExecutor } from "./utils";
 
 /**
@@ -35,7 +31,7 @@ export class AlreadyExecutedError extends Error {
  */
 export class UpdateWaiter extends Promise<void> {
     public executed = false;
-    public waiters: SubscribableOrPromise<any>[] = [];
+    public waiters: ObservableInput<any>[] = [];
     public waitMode: WaitMode = "all";
     public _actFn?: () => any | Promise<any>;
 
@@ -60,7 +56,7 @@ export class UpdateWaiter extends Promise<void> {
     addWaiter(
         waitFn: (
             updateObserver: Observable<UpdateEvent>,
-        ) => SubscribableOrPromise<any>,
+        ) => ObservableInput<any>,
     ) {
         if (this.updateObserver == null || this.executed)
             throw new AlreadyExecutedError();
@@ -147,16 +143,16 @@ export function createUpdateStream() {
     }
 
     function hoistError<TResult>(fn: () => TResult) {
-        const done = captureErrors();
+        const Complete = captureErrors();
         const result = fn();
-        done();
+        Complete();
         return result;
     }
 
     async function hoistErrorAsync<TResult>(fn: () => Promise<TResult>) {
-        const done = captureErrors();
+        const Complete = captureErrors();
         const result = await fn();
-        done();
+        Complete();
         return result;
     }
 
@@ -166,9 +162,9 @@ export function createUpdateStream() {
             promise: deferredPromise,
         } = promiseWithExternalExecutor<void>();
 
-        const update$ = subject.pipe(
-            publishReplay(),
-        ) as ConnectableObservable<UpdateEvent>;
+        const update$ = connectable(subject, {
+            connector: () => new ReplaySubject<UpdateEvent>(),
+        });
         const subscription = update$.connect();
 
         const waiter = new UpdateWaiter((resolve) => {
@@ -196,7 +192,7 @@ export function createUpdateStream() {
             );
 
             await waiter._actFn?.();
-            await race(error$, wait$).pipe(take(1)).toPromise();
+            await firstValueFrom(race(error$, wait$));
             subscription.unsubscribe();
         };
 
