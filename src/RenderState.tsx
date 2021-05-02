@@ -1,5 +1,5 @@
-import { version } from "react";
 import type { ReactElement, ReactNode } from "react";
+import { Suspense, version } from "react";
 import type {
     ReactTestRenderer,
     TestRendererOptions,
@@ -26,7 +26,7 @@ export class RenderState {
                 onError={(error) => this.updateSubject.next({ error })}
                 key={this.key}
             >
-                {element}
+                <Suspense fallback={false}>{element}</Suspense>
             </ErrorBoundary>
         );
 

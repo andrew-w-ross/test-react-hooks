@@ -4,7 +4,7 @@ import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
 import { RenderState } from "./RenderState";
 import { createUpdateStream } from "./updateWaiter";
-import { returnAct } from "./utils";
+import { isPromiseLike, returnAct } from "./utils";
 
 const cleanUpFns: Function[] = [];
 
@@ -95,6 +95,11 @@ export function createTestProxy<THook extends TestHook>(
                 result = proxiedHook(...params);
                 updateSubject.next({ async: isAsync });
             } catch (error) {
+                //If the error is a promise it means that the hook is suspended
+                //Send back to the react to deal with
+                if (isPromiseLike(error)) {
+                    throw error;
+                }
                 updateSubject.next({ error });
             } finally {
                 isAsync = true;
