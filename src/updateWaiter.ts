@@ -164,6 +164,7 @@ export function createUpdateStream() {
 
         const update$ = connectable(subject, {
             connector: () => new ReplaySubject<UpdateEvent>(),
+            resetOnDisconnect: false,
         });
         const subscription = update$.connect();
 
