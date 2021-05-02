@@ -13,7 +13,8 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "moduleResolution": "Node",
-        "noUnusedLocals": true
+        "noUnusedLocals": true,
+        "skipLibCheck": true
     },
     "include": ["src/**/*"]
 }
