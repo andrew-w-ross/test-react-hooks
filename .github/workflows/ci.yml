@@ -37,7 +37,7 @@ jobs:
         run: |
           yarn add react@${{ matrix.version }} -D
           yarn add react-test-renderer@${{ matrix.version }} -D
-        if: ${{ matrix.version != "latest"}} 
+        if: ${{ matrix.version != 'latest'}} 
       
       - name: build
         run: yarn build
@@ -58,7 +58,7 @@ jobs:
         run: |
           yarn add react@${{ matrix.version }}
           yarn add react-test-renderer@${{ matrix.version }}
-        if: ${{ matrix.version != "latest" }}
+        if: ${{ matrix.version != 'latest' }}
 
       - name: Test examples
         working-directory: ./examples
