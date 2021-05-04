@@ -9,7 +9,7 @@ import {
     Subject,
 } from "rxjs";
 import { bufferCount, debounceTime, filter, map, take } from "rxjs/operators";
-import { isPromiseLike, promiseWithExternalExecutor } from "./utils";
+import { promiseWithExternalExecutor } from "./utils";
 
 /**
  * What wait mode to use for multiple promises, @see Promise.race or @see Promise.all
@@ -84,7 +84,7 @@ export class UpdateWaiter extends Promise<void> {
      * Waits for the updates to stop for a certain amount of time before stopping.
      * @param ms - Time to wait in ms
      */
-    debounce = (ms = 2) =>
+    debounce = (ms = 3) =>
         this.addWaiter((update$) =>
             update$.pipe(
                 filter((v) => v.async === true),
@@ -156,22 +156,6 @@ export function createUpdateStream() {
         return result;
     }
 
-    function runAct(fn?: () => any) {
-        if (fn == null) return;
-        try {
-            return fn();
-        } catch (err) {
-            if (isPromiseLike(err)) {
-                err.then(
-                    () => subject.next({ async: true }),
-                    (error) => subject.next({ error }),
-                );
-            } else {
-                throw err;
-            }
-        }
-    }
-
     function createWaiter() {
         const {
             executor,
@@ -208,7 +192,7 @@ export function createUpdateStream() {
                 }),
             );
 
-            await runAct(waiter._actFn);
+            await waiter._actFn?.();
             await firstValueFrom(race(error$, wait$));
             subscription.unsubscribe();
         };

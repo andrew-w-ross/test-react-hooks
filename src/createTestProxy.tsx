@@ -6,6 +6,11 @@ import { RenderState } from "./RenderState";
 import { createUpdateStream } from "./updateWaiter";
 import { isPromiseLike, returnAct } from "./utils";
 
+//TODO : Add suspense checks
+export const SUSPENDED = Symbol("Suspended Result");
+
+export type Suspended = typeof SUSPENDED;
+
 const cleanUpFns: Function[] = [];
 
 export function cleanUp() {
@@ -63,30 +68,34 @@ export function createTestProxy<THook extends TestHook>(
     { testRendererOptions, wrapper }: CreateTestProxyOptions = {},
 ) {
     const { updateSubject, createWaiter, hoistError } = createUpdateStream();
-
-    let renderState = new RenderState(updateSubject, testRendererOptions);
+    const renderState = new RenderState(updateSubject, testRendererOptions);
 
     const cleanup = () => {
         renderState.unmount();
-        renderState = new RenderState(updateSubject, testRendererOptions);
     };
 
     /**
      * Function that will ensure a function and all it's returned memebers are wrapped in act
      */
     const wrapApplyAct: WrapApplyFn = (...args) => {
-        try {
-            return hoistError(() => returnAct(() => Reflect.apply(...args)));
-        } catch (err) {
-            if (isPromiseLike(err)) {
-                err.then(
-                    () => updateSubject.next({ async: true }),
-                    (error) => updateSubject.next({ error }),
-                );
-            } else {
-                throw err;
+        return hoistError(() => {
+            try {
+                const result = returnAct(() => Reflect.apply(...args));
+                updateSubject.next({ async: !renderState.isRendering });
+                return result;
+            } catch (err) {
+                if (isPromiseLike(err)) {
+                    if (renderState.isRendering) throw err;
+                    //If we are rendering then throw back so react can handle
+                    err.then(
+                        () => updateSubject.next({ async: true }),
+                        (error) => updateSubject.next({ error }),
+                    );
+                } else {
+                    updateSubject.next({ error: err });
+                }
             }
-        }
+        });
     };
 
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
@@ -96,25 +105,13 @@ export function createTestProxy<THook extends TestHook>(
         if (!cleanUpFns.includes(cleanup)) {
             cleanUpFns.push(cleanup);
         }
-        let result: ReturnType<TestHook> | undefined = undefined;
-
-        let isAsync = false;
+        let isCalled = false;
+        let result: ReturnType<TestHook> | Suspended = SUSPENDED;
         const Wrapper = wrapper ?? DefaultWrapper;
 
         const callback = () => {
-            try {
-                result = proxiedHook(...params);
-                updateSubject.next({ async: isAsync });
-            } catch (error) {
-                //If the error is a promise it means that the hook is suspended
-                //Send back to the react to deal with
-                if (isPromiseLike(error)) {
-                    throw error;
-                }
-                updateSubject.next({ error });
-            } finally {
-                isAsync = true;
-            }
+            isCalled = true;
+            result = proxiedHook(...params);
         };
 
         hoistError(() =>
@@ -125,13 +122,13 @@ export function createTestProxy<THook extends TestHook>(
             ),
         );
 
-        if (!isAsync) {
+        if (!isCalled) {
             console.warn(
                 "Check the code for your wrapper, it should render the children prop",
             );
         }
 
-        return result!;
+        return result;
     };
 
     const control = {

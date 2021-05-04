@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Suspense, version } from "react";
 import type {
     ReactTestRenderer,
@@ -13,15 +13,19 @@ import { randomNumber } from "./utils";
 export class RenderState {
     private key = randomNumber() + "";
     private reactTestRenderer: ReactTestRenderer | null = null;
-    private element?: ReactElement;
+    private rendering = false;
 
     constructor(
         private updateSubject: Subject<UpdateEvent>,
         private testRendererOptions?: TestRendererOptions,
     ) {}
 
+    get isRendering() {
+        return this.rendering;
+    }
+
     render(element: ReactNode) {
-        this.element = (
+        const renderElement = (
             <ErrorBoundary
                 onError={(error) => this.updateSubject.next({ error })}
                 key={this.key}
@@ -30,17 +34,19 @@ export class RenderState {
             </ErrorBoundary>
         );
 
+        this.rendering = true;
         act(() => {
-            if (this.element == null) return;
+            if (element == null) return;
             if (this.reactTestRenderer == null) {
                 this.reactTestRenderer = create(
-                    this.element,
+                    renderElement,
                     this.testRendererOptions,
                 );
             } else {
-                this.reactTestRenderer.update(this.element);
+                this.reactTestRenderer.update(renderElement);
             }
         });
+        this.rendering = false;
     }
 
     unmount() {
