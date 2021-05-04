@@ -75,7 +75,18 @@ export function createTestProxy<THook extends TestHook>(
      * Function that will ensure a function and all it's returned memebers are wrapped in act
      */
     const wrapApplyAct: WrapApplyFn = (...args) => {
-        return hoistError(() => returnAct(() => Reflect.apply(...args)));
+        try {
+            return hoistError(() => returnAct(() => Reflect.apply(...args)));
+        } catch (err) {
+            if (isPromiseLike(err)) {
+                err.then(
+                    () => updateSubject.next({ async: true }),
+                    (error) => updateSubject.next({ error }),
+                );
+            } else {
+                throw err;
+            }
+        }
     };
 
     const proxiedHook = wrapProxy(hook, wrapApplyAct);

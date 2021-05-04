@@ -9,7 +9,7 @@ import {
     Subject,
 } from "rxjs";
 import { bufferCount, debounceTime, filter, map, take } from "rxjs/operators";
-import { promiseWithExternalExecutor } from "./utils";
+import { isPromiseLike, promiseWithExternalExecutor } from "./utils";
 
 /**
  * What wait mode to use for multiple promises, @see Promise.race or @see Promise.all
@@ -143,17 +143,33 @@ export function createUpdateStream() {
     }
 
     function hoistError<TResult>(fn: () => TResult) {
-        const Complete = captureErrors();
+        const complete = captureErrors();
         const result = fn();
-        Complete();
+        complete();
         return result;
     }
 
     async function hoistErrorAsync<TResult>(fn: () => Promise<TResult>) {
-        const Complete = captureErrors();
+        const complete = captureErrors();
         const result = await fn();
-        Complete();
+        complete();
         return result;
+    }
+
+    function runAct(fn?: () => any) {
+        if (fn == null) return;
+        try {
+            return fn();
+        } catch (err) {
+            if (isPromiseLike(err)) {
+                err.then(
+                    () => subject.next({ async: true }),
+                    (error) => subject.next({ error }),
+                );
+            } else {
+                throw err;
+            }
+        }
     }
 
     function createWaiter() {
@@ -192,7 +208,7 @@ export function createUpdateStream() {
                 }),
             );
 
-            await waiter._actFn?.();
+            await runAct(waiter._actFn);
             await firstValueFrom(race(error$, wait$));
             subscription.unsubscribe();
         };
