@@ -36,7 +36,6 @@ export class RenderState {
 
         this.rendering = true;
         act(() => {
-            if (element == null) return;
             if (this.reactTestRenderer == null) {
                 this.reactTestRenderer = create(
                     renderElement,
