@@ -36,13 +36,13 @@ it("will wrap promises", async () => {
     expect(proxy).resolves.toBe(12);
 });
 
-it("will apply on promises with functions", async () => {
+it("will not apply on promises resulsts", async () => {
     const resolveObj = { calling: jest.fn() };
     const value = Promise.resolve(resolveObj);
     const proxy = wrapProxy(value, wrapFn);
 
     await proxy.then((v) => v.calling());
-    expect(wrapFn).toHaveBeenCalledTimes(1);
+    expect(wrapFn).toHaveBeenCalledTimes(0);
 });
 
 it("will wrap functions", () => {

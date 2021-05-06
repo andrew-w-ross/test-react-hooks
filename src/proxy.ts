@@ -17,11 +17,11 @@ export type WrapApplyFn = (
     argumentsList: any[],
 ) => any;
 
+//TODO : Add a shallow option that doesn't wrap arguments and promise results
 export function wrapProxy<T>(target: T, wrapFn: WrapApplyFn): T {
-    //TODO : Good place to add a recursion check
     if (isPromiseLike(target)) {
-        //@ts-expect-error
-        return target.then((result) => wrapProxy(result, wrapFn));
+        return target;
+        //return target.then((result) => wrapProxy(result, wrapFn));
     }
 
     return isPrimitive(target)

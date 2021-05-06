@@ -5099,6 +5099,13 @@ fsevents@^2.1.2:
   languageName: node
   linkType: hard
 
+"object-hash@npm:^2.0.3":
+  version: 2.1.1
+  resolution: "object-hash@npm:2.1.1"
+  checksum: fe49a0864cba7ac4055c604295692ae75f5f4d22ba929aaaa987469809d17ab030d1111e8f0d425a070fa4a78b8021b55260e26e98b66b59e0f7be2bd9069fb8
+  languageName: node
+  linkType: hard
+
 "object-inspect@npm:^1.9.0":
   version: 1.9.0
   resolution: "object-inspect@npm:1.9.0"
@@ -6623,6 +6630,7 @@ resolve@^2.0.0-next.3:
     rxjs: ^7.0.0
     ts-jest: ^26.5.5
     typescript: ^4.2.4
+    use-async-resource: ^2.2.1
   peerDependencies:
     react: ">= 16.14.0"
     react-test-renderer: ">= 16.14.0"
@@ -6972,6 +6980,15 @@ typescript@^4.2.4:
   version: 0.1.0
   resolution: "urix@npm:0.1.0"
   checksum: 6bdfca4e7fb7d035537068a47a04ace1bacfa32e6b1aaf54c5a0340c83125a186d59109a19b9a3a1c1f986d3eb718b82faf9ad03d53cb99cf868068580b15b3b
+  languageName: node
+  linkType: hard
+
+"use-async-resource@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "use-async-resource@npm:2.2.1"
+  dependencies:
+    object-hash: ^2.0.3
+  checksum: 1cbbd24968403542f07139565400b9676705287ff905ca33bce08ab1956ff5aa22bb2292f8de4f0c321fc6914f7585b0b4596528bdc590f4b86ccf0c88779506
   languageName: node
   linkType: hard
 

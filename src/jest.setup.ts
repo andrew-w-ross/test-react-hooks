@@ -2,5 +2,7 @@
 const errorSpy = jest.spyOn(console, "error");
 
 afterEach(() => {
-    expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining("act("));
+    expect(errorSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining("was not wrapped in act"),
+    );
 });

@@ -9,10 +9,11 @@ export function isPromiseLike(value: any): value is PromiseLike<any> {
     return value != null && typeof value.then === "function";
 }
 
-const NO_RESULT = Symbol("NO_RESULT");
+export const NO_RESULT = Symbol("NO_RESULT");
+export type NoResult = typeof NO_RESULT;
 
 export function returnAct<TResult>(actFn: () => TResult): TResult {
-    let result: typeof NO_RESULT | TResult = NO_RESULT;
+    let result: NoResult | TResult = NO_RESULT;
 
     act(() => {
         result = actFn();

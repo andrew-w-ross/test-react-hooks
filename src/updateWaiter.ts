@@ -84,7 +84,7 @@ export class UpdateWaiter extends Promise<void> {
      * Waits for the updates to stop for a certain amount of time before stopping.
      * @param ms - Time to wait in ms
      */
-    debounce = (ms = 2) =>
+    debounce = (ms = 3) =>
         this.addWaiter((update$) =>
             update$.pipe(
                 filter((v) => v.async === true),
@@ -143,16 +143,9 @@ export function createUpdateStream() {
     }
 
     function hoistError<TResult>(fn: () => TResult) {
-        const Complete = captureErrors();
+        const complete = captureErrors();
         const result = fn();
-        Complete();
-        return result;
-    }
-
-    async function hoistErrorAsync<TResult>(fn: () => Promise<TResult>) {
-        const Complete = captureErrors();
-        const result = await fn();
-        Complete();
+        complete();
         return result;
     }
 
@@ -206,6 +199,5 @@ export function createUpdateStream() {
         updateSubject: subject,
         createWaiter,
         hoistError,
-        hoistErrorAsync,
     };
 }

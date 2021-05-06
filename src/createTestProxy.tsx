@@ -1,5 +1,8 @@
 import type { ComponentType, ReactNode } from "react";
 import type { TestRendererOptions } from "react-test-renderer";
+import type { Suspended } from "./models";
+import { CheckWrapperError, UnknownError } from "./models";
+import { AlreadySuspendedError, SUSPENDED } from "./models";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
 import { RenderState } from "./RenderState";
@@ -37,7 +40,7 @@ export type TestHook = (...args: any[]) => any;
  */
 export type CreateTestProxyOptions = {
     /**
-     * Options that are forwared to @see {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
+     * Options that are forwared to {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
      */
     testRendererOptions?: TestRendererOptions;
 
@@ -45,6 +48,17 @@ export type CreateTestProxyOptions = {
      * Wrapper component for the hook callback, make sure children is rendered
      */
     wrapper?: WrapperComponent;
+
+    /**
+     * Should the proxy throw an error or print a warning, defaults to true.
+     */
+    strict?: boolean;
+
+    /**
+     * When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed.
+     * If this is set to false {@see waitForNextUpdate} will not reject on error and instead the next invocation will throw.
+     */
+    autoInvokeSuspense?: boolean;
 };
 
 /**
@@ -60,22 +74,60 @@ export type CreateTestProxyOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { testRendererOptions, wrapper }: CreateTestProxyOptions = {},
+    {
+        testRendererOptions,
+        wrapper,
+        strict = true,
+        autoInvokeSuspense = true,
+    }: CreateTestProxyOptions = {},
 ) {
     const { updateSubject, createWaiter, hoistError } = createUpdateStream();
-
-    let renderState = new RenderState(updateSubject, testRendererOptions);
+    const renderState = new RenderState(updateSubject, testRendererOptions);
 
     const cleanup = () => {
         renderState.unmount();
-        renderState = new RenderState(updateSubject, testRendererOptions);
+    };
+
+    const handleProxyErrors = (error: Error) => {
+        if (strict) throw error;
+        console.warn(`${error.name}: ${error.message}`);
     };
 
     /**
      * Function that will ensure a function and all it's returned memebers are wrapped in act
      */
     const wrapApplyAct: WrapApplyFn = (...args) => {
-        return hoistError(() => returnAct(() => Reflect.apply(...args)));
+        return hoistError(() => {
+            try {
+                const result = returnAct(() => Reflect.apply(...args));
+                updateSubject.next({ async: !renderState.isRendering });
+                return result;
+            } catch (callerror) {
+                if (isPromiseLike(callerror)) {
+                    //If we are rendering then throw back so react can handle
+                    if (renderState.isRendering) throw callerror;
+
+                    callerror.then(() => {
+                        //This could be done better inside of renderState
+                        renderState.isSuspended = false;
+                        try {
+                            //This probably doesn't need to
+                            returnAct(() => Reflect.apply(...args));
+                            updateSubject.next({ async: true });
+                        } catch (error) {
+                            updateSubject.next({ error });
+                        }
+                    });
+                } else {
+                    updateSubject.next({ error: callerror });
+                }
+            }
+            if (renderState.isSuspended) {
+                handleProxyErrors(new AlreadySuspendedError(args));
+            }
+            renderState.isSuspended = true;
+            return SUSPENDED;
+        });
     };
 
     const proxiedHook = wrapProxy(hook, wrapApplyAct);
@@ -85,25 +137,13 @@ export function createTestProxy<THook extends TestHook>(
         if (!cleanUpFns.includes(cleanup)) {
             cleanUpFns.push(cleanup);
         }
-        let result: ReturnType<TestHook> | undefined = undefined;
-
-        let isAsync = false;
+        let isCalled = false;
+        let result: ReturnType<TestHook> | Suspended = SUSPENDED;
         const Wrapper = wrapper ?? DefaultWrapper;
 
         const callback = () => {
-            try {
-                result = proxiedHook(...params);
-                updateSubject.next({ async: isAsync });
-            } catch (error) {
-                //If the error is a promise it means that the hook is suspended
-                //Send back to the react to deal with
-                if (isPromiseLike(error)) {
-                    throw error;
-                }
-                updateSubject.next({ error });
-            } finally {
-                isAsync = true;
-            }
+            isCalled = true;
+            result = proxiedHook(...params);
         };
 
         hoistError(() =>
@@ -114,13 +154,20 @@ export function createTestProxy<THook extends TestHook>(
             ),
         );
 
-        if (!isAsync) {
+        if (!isCalled) {
+            if (Wrapper === DefaultWrapper) {
+                //This shouldn't happen, famous last words. Instead throw an error explaining where to raise an issue.
+                throw new UnknownError();
+            } else {
+                handleProxyErrors(new CheckWrapperError(Wrapper));
+            }
+
             console.warn(
                 "Check the code for your wrapper, it should render the children prop",
             );
         }
 
-        return result!;
+        return result;
     };
 
     const control = {
