@@ -14,6 +14,7 @@ export class RenderState {
     private key = randomNumber() + "";
     private reactTestRenderer: ReactTestRenderer | null = null;
     private rendering = false;
+    public isSuspended = false;
 
     constructor(
         private updateSubject: Subject<UpdateEvent>,
@@ -57,5 +58,6 @@ export class RenderState {
             this.reactTestRenderer?.unmount();
         });
         this.reactTestRenderer = null;
+        this.isSuspended = false;
     }
 }

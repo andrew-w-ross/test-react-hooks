@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { createTestProxy } from "../createTestProxy";
+import { SUSPENDED } from "../models";
 
 type Result =
     | { type: "error"; error: any }
@@ -43,7 +44,7 @@ const [prxAsyncSuspense, control] = createTestProxy(useAsyncSuspense);
 it("will wait for suspense", async () => {
     const getStuff = () => Promise.resolve(1);
     {
-        prxAsyncSuspense(getStuff);
+        expect(prxAsyncSuspense(getStuff)).toBe(SUSPENDED);
     }
 
     await control.waitForNextUpdate();
@@ -58,7 +59,7 @@ it("will throw on waitForNextUpdate if suspense rejects", async () => {
     const throwStuff = () => Promise.reject("Boom Suspense");
 
     {
-        prxAsyncSuspense(throwStuff);
+        expect(prxAsyncSuspense(throwStuff)).toBe(SUSPENDED);
     }
 
     await expect(control.waitForNextUpdate()).rejects.toBe("Boom Suspense");

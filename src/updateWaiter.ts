@@ -149,13 +149,6 @@ export function createUpdateStream() {
         return result;
     }
 
-    async function hoistErrorAsync<TResult>(fn: () => Promise<TResult>) {
-        const complete = captureErrors();
-        const result = await fn();
-        complete();
-        return result;
-    }
-
     function createWaiter() {
         const {
             executor,
@@ -206,6 +199,5 @@ export function createUpdateStream() {
         updateSubject: subject,
         createWaiter,
         hoistError,
-        hoistErrorAsync,
     };
 }

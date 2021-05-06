@@ -1,15 +1,13 @@
 import type { ComponentType, ReactNode } from "react";
 import type { TestRendererOptions } from "react-test-renderer";
+import type { Suspended } from "./models";
+import { CheckWrapperError, UnknownError } from "./models";
+import { AlreadySuspendedError, SUSPENDED } from "./models";
 import type { WrapApplyFn } from "./proxy";
 import { wrapProxy } from "./proxy";
 import { RenderState } from "./RenderState";
 import { createUpdateStream } from "./updateWaiter";
 import { isPromiseLike, returnAct } from "./utils";
-
-//TODO : Add suspense checks
-export const SUSPENDED = Symbol("Suspended Result");
-
-export type Suspended = typeof SUSPENDED;
 
 const cleanUpFns: Function[] = [];
 
@@ -42,7 +40,7 @@ export type TestHook = (...args: any[]) => any;
  */
 export type CreateTestProxyOptions = {
     /**
-     * Options that are forwared to @see {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
+     * Options that are forwared to {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
      */
     testRendererOptions?: TestRendererOptions;
 
@@ -50,6 +48,17 @@ export type CreateTestProxyOptions = {
      * Wrapper component for the hook callback, make sure children is rendered
      */
     wrapper?: WrapperComponent;
+
+    /**
+     * Should the proxy throw an error or print a warning, defaults to true.
+     */
+    strict?: boolean;
+
+    /**
+     * When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed.
+     * If this is set to false {@see waitForNextUpdate} will not reject on error and instead the next invocation will throw.
+     */
+    autoInvokeSuspense?: boolean;
 };
 
 /**
@@ -65,13 +74,23 @@ export type CreateTestProxyOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    { testRendererOptions, wrapper }: CreateTestProxyOptions = {},
+    {
+        testRendererOptions,
+        wrapper,
+        strict = true,
+        autoInvokeSuspense = true,
+    }: CreateTestProxyOptions = {},
 ) {
     const { updateSubject, createWaiter, hoistError } = createUpdateStream();
     const renderState = new RenderState(updateSubject, testRendererOptions);
 
     const cleanup = () => {
         renderState.unmount();
+    };
+
+    const handleProxyErrors = (error: Error) => {
+        if (strict) throw error;
+        console.warn(`${error.name}: ${error.message}`);
     };
 
     /**
@@ -83,18 +102,31 @@ export function createTestProxy<THook extends TestHook>(
                 const result = returnAct(() => Reflect.apply(...args));
                 updateSubject.next({ async: !renderState.isRendering });
                 return result;
-            } catch (err) {
-                if (isPromiseLike(err)) {
-                    if (renderState.isRendering) throw err;
+            } catch (callerror) {
+                if (isPromiseLike(callerror)) {
                     //If we are rendering then throw back so react can handle
-                    err.then(
-                        () => updateSubject.next({ async: true }),
-                        (error) => updateSubject.next({ error }),
-                    );
+                    if (renderState.isRendering) throw callerror;
+
+                    callerror.then(() => {
+                        //This could be done better inside of renderState
+                        renderState.isSuspended = false;
+                        try {
+                            //This probably doesn't need to
+                            returnAct(() => Reflect.apply(...args));
+                            updateSubject.next({ async: true });
+                        } catch (error) {
+                            updateSubject.next({ error });
+                        }
+                    });
                 } else {
-                    updateSubject.next({ error: err });
+                    updateSubject.next({ error: callerror });
                 }
             }
+            if (renderState.isSuspended) {
+                handleProxyErrors(new AlreadySuspendedError(args));
+            }
+            renderState.isSuspended = true;
+            return SUSPENDED;
         });
     };
 
@@ -123,6 +155,13 @@ export function createTestProxy<THook extends TestHook>(
         );
 
         if (!isCalled) {
+            if (Wrapper === DefaultWrapper) {
+                //This shouldn't happen, famous last words. Instead throw an error explaining where to raise an issue.
+                throw new UnknownError();
+            } else {
+                handleProxyErrors(new CheckWrapperError(Wrapper));
+            }
+
             console.warn(
                 "Check the code for your wrapper, it should render the children prop",
             );
