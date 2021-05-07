@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import type { TestRendererOptions } from "react-test-renderer";
+import type { TestRendererOptions, act } from "react-test-renderer";
 import type { Suspended } from "./models";
 import { CheckWrapperError, UnknownError } from "./models";
 import { AlreadySuspendedError, SUSPENDED } from "./models";
@@ -27,7 +27,7 @@ const CallbackComponent = ({ callback }: CallbackHookProps) => {
 };
 
 /**
- * Wrapper component has to take in and render the children
+ * Wrapper component to take in and render the children
  */
 export type WrapperComponent = ComponentType<{ children: ReactNode }>;
 
@@ -59,6 +59,11 @@ export type CreateTestProxyOptions = {
      * If this is set to false {@see waitForNextUpdate} will not reject on error and instead the next invocation will throw.
      */
     autoInvokeSuspense?: boolean;
+
+    /**
+     * The act function that react needs, use this if you need to use multiple react {@link https://reactjs.org/docs/testing-recipes.html#multiple-renderers multiple-renderers}
+     */
+    actFn?: typeof act;
 };
 
 /**
@@ -79,6 +84,7 @@ export function createTestProxy<THook extends TestHook>(
         wrapper,
         strict = true,
         autoInvokeSuspense = true,
+        actFn,
     }: CreateTestProxyOptions = {},
 ) {
     const { updateSubject, createWaiter, hoistError } = createUpdateStream();
@@ -99,7 +105,7 @@ export function createTestProxy<THook extends TestHook>(
     const wrapApplyAct: WrapApplyFn = (...args) => {
         return hoistError(() => {
             try {
-                const result = returnAct(() => Reflect.apply(...args));
+                const result = returnAct(() => Reflect.apply(...args), actFn);
                 updateSubject.next({ async: !renderState.isRendering });
                 return result;
             } catch (callerror) {
@@ -111,8 +117,11 @@ export function createTestProxy<THook extends TestHook>(
                         //This could be done better inside of renderState
                         renderState.isSuspended = false;
                         try {
-                            //This probably doesn't need to
-                            returnAct(() => Reflect.apply(...args));
+                            if (autoInvokeSuspense) {
+                                //This probably doesn't need to wrapped in act
+                                returnAct(() => Reflect.apply(...args), actFn);
+                            }
+
                             updateSubject.next({ async: true });
                         } catch (error) {
                             updateSubject.next({ error });
@@ -161,10 +170,6 @@ export function createTestProxy<THook extends TestHook>(
             } else {
                 handleProxyErrors(new CheckWrapperError(Wrapper));
             }
-
-            console.warn(
-                "Check the code for your wrapper, it should render the children prop",
-            );
         }
 
         return result;

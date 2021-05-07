@@ -21,8 +21,8 @@ export class AlreadySuspendedError extends Error {
         const fnName = typeof fn === "function" ? fn.name : null;
 
         return `${fnName ?? "NA"} called while the hook was suspended. 
-                This wouldn't happen in a react component as the previous suspended call would have exited the current call stack. 
-                Use waitForNextUpdate() before calling.`;
+This wouldn't happen in a react component as the previous suspended call would have exited the current call stack. 
+Use waitForNextUpdate() before calling.`;
     }
 }
 

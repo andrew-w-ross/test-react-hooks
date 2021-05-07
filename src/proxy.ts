@@ -17,11 +17,9 @@ export type WrapApplyFn = (
     argumentsList: any[],
 ) => any;
 
-//TODO : Add a shallow option that doesn't wrap arguments and promise results
 export function wrapProxy<T>(target: T, wrapFn: WrapApplyFn): T {
     if (isPromiseLike(target)) {
         return target;
-        //return target.then((result) => wrapProxy(result, wrapFn));
     }
 
     return isPrimitive(target)
@@ -43,7 +41,6 @@ export function createHandler(wrapFn: WrapApplyFn): ProxyHandler<any> {
                 : result;
         },
         apply(target: any, thisArg: any, argumentsList: any[]) {
-            argumentsList.forEach((arg) => wrapProxy(arg, wrapFn));
             return wrapProxy(wrapFn(target, thisArg, argumentsList), wrapFn);
         },
     };

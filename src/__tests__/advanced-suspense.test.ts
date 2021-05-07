@@ -59,15 +59,39 @@ describe("strict", () => {
         expect(dataReader()).toBe(SUSPENDED);
         expect(dataReader).toThrowError(AlreadySuspendedError);
     });
+
+    it("should trigger an update for the data reader", async () => {
+        {
+            const [dataReader, updateDataReader] = prxAsyncResource(apiFn, 1);
+            expect(dataReader()).toBe(SUSPENDED);
+
+            await control.waitForNextUpdate();
+
+            expect(dataReader()).toEqual({ id: 1 });
+            updateDataReader(2);
+        }
+
+        {
+            const [dataReader] = prxAsyncResource(apiFn, 1);
+            expect(dataReader()).toBe(SUSPENDED);
+
+            await control.waitForNextUpdate();
+
+            expect(dataReader((u) => u.id)).toStrictEqual(2);
+        }
+    });
 });
 
 describe("loose", () => {
     const warnSpy = jest.spyOn(console, "warn");
 
     it("does allow for double suspense", async () => {
-        const [prxLooseAsyncResource] = createTestProxy(useAsyncResource, {
-            strict: false,
-        });
+        const [prxLooseAsyncResource, control] = createTestProxy(
+            useAsyncResource,
+            {
+                strict: false,
+            },
+        );
 
         {
             const [dataReader] = prxLooseAsyncResource(apiSimpleFn, []);
@@ -78,6 +102,36 @@ describe("loose", () => {
             expect(warnSpy).toHaveBeenCalledWith(
                 expect.stringContaining("called while the hook was suspended"),
             );
+        }
+
+        await control.waitForNextUpdate();
+
+        {
+            const [dataReader] = prxLooseAsyncResource(apiSimpleFn, []);
+            expect(dataReader()).toEqual({ message: "success" });
+        }
+    });
+});
+
+describe("autoInvokeSuspense off", () => {
+    it("will not reject the waiter", async () => {
+        const [prxNoInvokeAsyncResource, control] = createTestProxy(
+            useAsyncResource,
+            {
+                autoInvokeSuspense: false,
+            },
+        );
+
+        {
+            const [dataReader] = prxNoInvokeAsyncResource(apiFailingFn, []);
+            expect(dataReader()).toBe(SUSPENDED);
+        }
+
+        await control.waitForNextUpdate();
+
+        {
+            const [dataReader] = prxNoInvokeAsyncResource(apiFailingFn, []);
+            expect(dataReader).toThrowError("Boom Suspense");
         }
     });
 });
