@@ -12,11 +12,11 @@ export function isPromiseLike(value: any): value is PromiseLike<any> {
 export const NO_RESULT = Symbol("NO_RESULT");
 export type NoResult = typeof NO_RESULT;
 
-export function returnAct<TResult>(actFn: () => TResult): TResult {
+export function returnAct<TResult>(fn: () => TResult, actFn = act): TResult {
     let result: NoResult | TResult = NO_RESULT;
 
-    act(() => {
-        result = actFn();
+    actFn(() => {
+        result = fn();
     });
 
     if (result === NO_RESULT) {
