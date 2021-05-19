@@ -16,5 +16,14 @@
         "noUnusedLocals": true,
         "skipLibCheck": true
     },
-    "include": ["src/**/*"]
+    "include": ["src"],
+    "typedocOptions": {
+        "entryPoints": "./src/index.ts",
+        "excludePrivate": true,
+        "excludeInternal": true,
+        "out": "docs/api",
+        "name": "test-react-hooks",
+        "includeVersion": true,
+        "readme": "none"
+    }
 }

@@ -76,7 +76,7 @@ it("will throw if an error is piped through", async () => {
     await expect(waitPromise).rejects.toThrowError(error);
 });
 
-it("will throw if an error occures during act", async () => {
+it("will throw if an error occurs during act", async () => {
     const { createWaiter } = createUpdateStream();
 
     const updateWait = createWaiter().act(() => {
@@ -86,7 +86,7 @@ it("will throw if an error occures during act", async () => {
     await expect(updateWait).rejects.toThrowError("boom");
 });
 
-it("will warn if act function is overriden", () => {
+it("will warn if act function is overridden", () => {
     const errorSpy = jest.spyOn(console, "warn");
     const { createWaiter } = createUpdateStream();
 
@@ -107,12 +107,11 @@ it("will wait for one of the promises to resolve in race", async () => {
         .then(resolveSpy);
     //force execution
     await wait();
-
-    await wait();
     expect(resolveSpy).not.toHaveBeenCalled();
 
     updateSubject.next({ async: true });
     await wait();
+
     expect(resolveSpy).toHaveBeenCalled();
 });
 
@@ -121,6 +120,7 @@ it("will wait for all of the promises to resolve in race", async () => {
 
     createWaiter().iterationMode("all").updateCount(2).then(resolveSpy);
     await wait();
+    expect(resolveSpy).not.toHaveBeenCalled();
 
     updateSubject.next({ async: true });
     await wait();
@@ -135,7 +135,7 @@ it("will throw if modified after wait", async () => {
     const { createWaiter } = createUpdateStream();
 
     const waiter = createWaiter();
-    await Promise.resolve();
+    await wait();
 
     expect(() => waiter.debounce()).toThrowError();
 });

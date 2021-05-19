@@ -1,12 +1,19 @@
 import type { ComponentType } from "react";
 
 /**
- * Result type that is returned if the call to that function is suspended.
+ * Symbol that is returned if the call to that function is suspended.
  */
 export const SUSPENDED = Symbol("Suspended Result");
 
+/**
+ * Type alias for the {@link SUSPENDED} symbol
+ */
 export type Suspended = typeof SUSPENDED;
 
+/**
+ * Thrown if a hook is already in a suspended state.
+ * Probally means that you'll need to wait for the suspension to complete.
+ */
 export class AlreadySuspendedError extends Error {
     constructor(applyArgs: any[]) {
         super(AlreadySuspendedError.getErrorMessage(applyArgs));
@@ -26,6 +33,9 @@ Use waitForNextUpdate() before calling.`;
     }
 }
 
+/**
+ * Wrapper component passed in did not render it's children.
+ */
 export class CheckWrapperError extends Error {
     constructor(wrapper: ComponentType<any>) {
         super(CheckWrapperError.getErrorMessage(wrapper));
@@ -38,6 +48,9 @@ export class CheckWrapperError extends Error {
     }
 }
 
+/**
+ * Something has gone wrong please report this issue.
+ */
 export class UnknownError extends Error {
     constructor() {
         super(

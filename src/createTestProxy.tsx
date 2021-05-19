@@ -15,7 +15,15 @@ export function cleanUp() {
     cleanUpFns.splice(0, cleanUpFns.length).forEach((func) => func());
 }
 
-if (!process.env.TEST_REACT_HOOKS_NO_CLEANUP) globalThis?.afterEach?.(cleanUp);
+if (!process.env.TEST_REACT_HOOKS_NO_CLEANUP) {
+    if (typeof globalThis?.afterEach === "function") {
+        globalThis?.afterEach?.(cleanUp);
+    } else {
+        console.warn(
+            "No afterEach function found on the global scope, please call cleanUp function between tests.",
+        );
+    }
+}
 
 type CallbackHookProps = {
     callback: Function;
@@ -36,11 +44,11 @@ const DefaultWrapper: WrapperComponent = ({ children }) => <>{children}</>;
 export type TestHook = (...args: any[]) => any;
 
 /**
- * Options for @see createTestProxy
+ * Options for {@link createTestProxy}
  */
 export type CreateTestProxyOptions = {
     /**
-     * Options that are forwared to {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
+     * Options that are forwarded to {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
      */
     testRendererOptions?: TestRendererOptions;
 
@@ -56,7 +64,7 @@ export type CreateTestProxyOptions = {
 
     /**
      * When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed.
-     * If this is set to false {@see waitForNextUpdate} will not reject on error and instead the next invocation will throw.
+     * If this is set to false {@link waitForNextUpdate} will not reject on error and instead the next invocation will throw.
      */
     autoInvokeSuspense?: boolean;
 
@@ -67,26 +75,27 @@ export type CreateTestProxyOptions = {
 };
 
 /**
+ * Main function for `test-react-hooks`
  * Creates a proxy hook and a control object for that hook
- * Proxy hook will rerender when called and wrap
- * Calls in act when appropriate
+ * Proxy hook will rerender when called and wrap calls in act when appropriate
  *
  * @export
- * @template THook
+ * @template THook type of the hook to proxy, should be inferred from hook argument
  * @param {THook} hook to proxy
  * @param {CreateTestProxyOptions} [options={}]
- * @returns {[THook, HookControl<TProps>]}
+ * @returns {[THook, HookControl<TProps>]} tuple where the first result is the proxied hook and the second is the control object.
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
-    {
+    options: CreateTestProxyOptions = {},
+) {
+    const {
         testRendererOptions,
-        wrapper,
         strict = true,
         autoInvokeSuspense = true,
         actFn,
-    }: CreateTestProxyOptions = {},
-) {
+    } = options;
+    let wrapper = options.wrapper;
     const { updateSubject, createWaiter, hoistError } = createUpdateStream();
     const renderState = new RenderState(updateSubject, testRendererOptions);
 
@@ -100,7 +109,7 @@ export function createTestProxy<THook extends TestHook>(
     };
 
     /**
-     * Function that will ensure a function and all it's returned memebers are wrapped in act
+     * Function that will ensure a function and all it's returned members are wrapped in act
      */
     const wrapApplyAct: WrapApplyFn = (...args) => {
         return hoistError(() => {
@@ -190,7 +199,7 @@ export function createTestProxy<THook extends TestHook>(
         unmount: () => hoistError(() => renderState.unmount()),
 
         /**
-         * Creates an @see UpdateWaiter that by default will wait for the component to stop updating for `2ms`.
+         * Creates an {@link UpdateWaiter} that by default will wait for the component to stop updating for `2ms`.
          * @returns UpdateWaiter
          */
         waitForNextUpdate: () => createWaiter(),

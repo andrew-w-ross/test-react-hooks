@@ -1,6 +1,6 @@
 # test-react-hooks ⚓️
 
-Easiest to testing library for react hooks out there.
+Simplest testing library for react hooks.
 
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 ![](https://img.shields.io/david/andrew-w-ross/test-react-hooks.svg?style=flat)
@@ -10,18 +10,18 @@ Easiest to testing library for react hooks out there.
 
 ## Contents
 
-- [test-react-hooks ⚓️](#test-react-hooks-️)
-  - [Contents](#contents)
-  - [Get Started](#get-started)
-  - [Usage](#usage)
-  - [Examples](#examples)
-  - [Api](#api)
-    - [createTestProxy](#createtestproxy)
-      - [Arguments](#arguments)
-      - [Result](#result)
-    - [UpdateWaiter](#updatewaiter)
-    - [cleanup](#cleanup)
-    - [act](#act)
+-   [test-react-hooks ⚓️](#test-react-hooks-️)
+    -   [Contents](#contents)
+    -   [Get Started](#get-started)
+    -   [Usage](#usage)
+    -   [Examples](#examples)
+    -   [Api](#api)
+        -   [createTestProxy](#createtestproxy)
+            -   [Arguments](#arguments)
+            -   [Result](#result)
+        -   [UpdateWaiter](#updatewaiter)
+        -   [cleanup](#cleanup)
+        -   [act](#act)
 
 ## Get Started
 
@@ -32,7 +32,7 @@ Depending on your package manager run one of the following commands.
 -   `yarn add test-react-hooks react react-test-renderer -D`
 -   `npm i test-react-hooks react react-test-renderer --save-dev`
 
-## Usage
+## Quick Start
 
 ```javascript
 import { createTestProxy } from "test-react-hooks";
@@ -100,117 +100,74 @@ Or click on the below link to a sandbox with the above examples.
 
 [![Edit examples](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/andrew-w-ross/test-react-hooks/tree/master/examples?autoresize=1&module=%2Fcount.spec.js&previewwindow=tests)
 
-## Api
+## Api Documentation
 
-### createTestProxy
+Main entry point of the project is [the createTestProxy function.](docs/api/readme.md#createtestproxy)
 
-`createTestProxy<THook, TProps = any>(hook: THook,options: UseProxyOptions<TProps> = {}) => [THook, HookControl<TProps>]`
+For the rest of the api documentation [click here.](docs/api/readme.md)
 
-Creates a proxy of the hook passed in for testing.
+## Why use test-react-hooks?
 
-#### Arguments
+Testing by it's very nature in in inherently filled with uncertainty.
+The goal of `test-react-hooks` is to remove that uncertainty by giving an api that feels like just using the hook with as little api between you and it.
 
--   `hook` : hook to be tested
+It also not silent about when things go wrong, a goal for this library is to break where an error occurs.
+Error handling will be covered in more detail below.
 
--   `options` : optional options to render the hook with
+Overall it attempts to get out of your way without any surprises on how to write your tests or how they'll behave when used in react.
 
-```typescript
-/**
- * Options for @see createTestProxy
- */
-export type CreateTestProxyOptions = {
-    /**
-     * Options that are forwared to @see {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
-     */
-    testRendererOptions?: TestRendererOptions;
+## Slower start
 
-    /**
-     * Wrapper component for the hook callback, make sure children is rendered
-     */
-    wrapper?: WrapperComponent;
-};
+The main entry point for `test-react-hooks` is [createTestProxy](docs/api/readme.md#createtestprox).
+It takes in two arguments the first is the hook that you'll want to test and the second is an optional [options argument](docs/api/readme.md#createtestproxyoptions).
+
+```javascript
+import { useState } from "react";
+import { createTestProxy } from "test-react-hooks";
+
+const [prxState, control] = createTestProxy(useState);
+// or createTestProxy(useHook, optionsObject);
 ```
 
-#### Result
+`createTestProxy` returns a tuple with two elements the first is a proxied version of your hook and the second is a control object.
+As a naming convention `use` is replaced with `prx`.
 
-Tuple with the first element being a proxy hook and it's control object
+### A note on naming
 
-`[THook, TestProxyControl]`
+> As a style choice replacing `use` with `prx` gives a hint at a relation to the original hook, stops the warning from eslint and avoids a symbol clash.
+> With that being said the name has no technical requirement so naming it what you wish is fine.
 
--   `THook` - A proxy of the hook argument, each call to the hook will call render
+Calling the proxied hook will force a render or update the underlying component and return the hook results.
+Given the above example here is how you'd test a state update.
 
--   `TestProxyControl` - Control object for the proxy hook
+```javascript
+it("will update state", () => {
+    //Code blocks are useful to avoid symbol clashing
+    {
+        //This is just the useState hook, use it the same way you would useState
+        const [value, setValue] = prxState(1);
+        expect(value).toBe(1);
+        setValue(2);
+        //FYI `value` is still 1 here, same behavior as react
+    }
 
-```typescript
-type TestProxyControl = {
-    /**
-     * Sets the wrapper, passing in null or undefined will use the default wrapper.
-     * Setting this does not force a render.
-     */
-    wrapper: WrapperComponent | null | undefined;
-
-    /**
-     * Unmount the current component.
-     */
-    unmount: () => void;
-
-    /**
-     * Creates an @see UpdateWaiter that by default will wait for the component to stop updating for `2ms`.
-     * @returns UpdateWaiter
-     */
-    waitForNextUpdate: () => UpdateWaiter;
-};
+    {
+        //Next render of the hook
+        const [value, setValue] = prxState(1);
+        expect(value).toBe(2);
+    }
+});
 ```
 
-### UpdateWaiter
+As you can see the usage of the proxied version of `useState` is the same as you would do in react.
+This would suggest that a call to the proxied hook is stateful and it is.
 
-```typescript
-/**
- * UpdateWaiter is a fluent api that will resolve when it's conditions are met.
- */
-class UpdateWaiter extends Promise {
-    /**
-     * @param waitFn function that takes in an {Observable<UpdateEvent>} and returns an {Observable<any>} or a {Promise}
-     */
-    addWaiter(
-        waitFn: (
-            updateObserver: Observable<UpdateEvent>,
-        ) => SubscribableOrPromise<any>,
-    ): this;
+### Cleanup
 
-    /**
-     * Waits for the updates to stop for a certain amount of time before resolving.
-     * @param ms - Time to wait in ms
-     */
-    debounce(ms = 2): this;
+`test-react-hooks` exports a `cleanUp` function that needs to be called between tests.
 
-    /**
-     * Waits for a certain amount of updates before resolving.
-     * @param count - Amount of update to wait for.
-     */
-    updateCount(count = 1): this;
+Proxied hooks can safely be shared across multiple tests as long as the `cleanUp` function is called between tests.
+`test-react-hooks` will look for an `afterEach` function on the global scope when imported and register the cleanup function.
+In most cases this will be done for you and if it's not a warning explaining that `cleanUp` needs to be called will be printed.
 
-    /**
-     * If there is more than one condition how should they be handled
-     * @param mode - is either the string 'race' or 'all' if 'race' will wait for one to resolve if 'all' waits for all to resolve.
-     */
-    iterationMode(mode: WaitMode): this;
-}
-```
-
-### cleanup
-
-`cleanUp():void`
-
-Function to be called after your tests to clean up the test renderer created during testing.
-By default will look on the global scope if an `afterEach` is defined and a function and attempt to hook up any cleanup function to that. To disable this behavior set `TEST_REACT_HOOKS_NO_CLEANUP` enviroment variable.
-
-### act
-
-`act(callback: () => void):void`
-
-Re-exported from [react-test-renderer](https://reactjs.org/docs/test-renderer.html#testrendereract)
-
-Use this if your updating the dom outside the hook.
-
-For an example on correct usage check out [dom event example](./examples/domevent.test.js)
+If for some reason you want to disable this behavior define a variable on the environment called `TEST_REACT_HOOKS_NO_CLEANUP`.
