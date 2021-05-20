@@ -12,7 +12,7 @@ export type Suspended = typeof SUSPENDED;
 
 /**
  * Thrown if a hook is already in a suspended state.
- * Probally means that you'll need to wait for the suspension to complete.
+ * Probably means that you'll need to wait for the suspension to complete.
  */
 export class AlreadySuspendedError extends Error {
     constructor(applyArgs: any[]) {
@@ -21,7 +21,7 @@ export class AlreadySuspendedError extends Error {
 
     /**
      *
-     * @param appyArgs Arguments sent to {@see Reflect.apply}
+     * @param applyArgs Arguments sent to {@see Reflect.apply}
      */
     static getErrorMessage(applyArgs: any[]) {
         const fn = applyArgs?.[0];

@@ -87,6 +87,7 @@ export type CreateTestProxyOptions = {
  */
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
+    //If you destructor the args the naming gets odd in documentation
     options: CreateTestProxyOptions = {},
 ) {
     const {
@@ -94,13 +95,18 @@ export function createTestProxy<THook extends TestHook>(
         strict = true,
         autoInvokeSuspense = true,
         actFn,
+        wrapper: wrapperArg,
     } = options;
-    let wrapper = options.wrapper;
+
+    let wrapper = wrapperArg;
+
     const { updateSubject, createWaiter, hoistError } = createUpdateStream();
     const renderState = new RenderState(updateSubject, testRendererOptions);
 
     const cleanup = () => {
         renderState.unmount();
+        //Reset to the original wrapper
+        wrapper = wrapperArg;
     };
 
     const handleProxyErrors = (error: Error) => {

@@ -46,7 +46,7 @@ Options for [createTestProxy](README.md#createtestproxy)
 | `testRendererOptions?` | TestRendererOptions | Options that are forwarded to [react-test-renderer](https://reactjs.org/docs/test-renderer.html) |
 | `wrapper?` | [*WrapperComponent*](README.md#wrappercomponent) | Wrapper component for the hook callback, make sure children is rendered |
 
-Defined in: [src/createTestProxy.tsx:49](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/createTestProxy.tsx#L49)
+Defined in: [src/createTestProxy.tsx:49](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L49)
 
 ___
 
@@ -56,7 +56,7 @@ ___
 
 Type alias for the [SUSPENDED](README.md#suspended) symbol
 
-Defined in: [src/models.ts:11](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/models.ts#L11)
+Defined in: [src/models.ts:11](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L11)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/createTestProxy.tsx:44](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/createTestProxy.tsx#L44)
+Defined in: [src/createTestProxy.tsx:44](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L44)
 
 ___
 
@@ -84,7 +84,7 @@ ___
 
 Ƭ **TestProxyControl**: *ReturnType*<*typeof* [*createTestProxy*](README.md#createtestproxy)\>[``1``]
 
-Defined in: [src/createTestProxy.tsx:211](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/createTestProxy.tsx#L211)
+Defined in: [src/createTestProxy.tsx:217](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L217)
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 Wrapper component to take in and render the children
 
-Defined in: [src/createTestProxy.tsx:40](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/createTestProxy.tsx#L40)
+Defined in: [src/createTestProxy.tsx:40](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L40)
 
 ## Variables
 
@@ -104,7 +104,7 @@ Defined in: [src/createTestProxy.tsx:40](https://github.com/andrew-w-ross/test-r
 
 Symbol that is returned if the call to that function is suspended.
 
-Defined in: [src/models.ts:6](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/models.ts#L6)
+Defined in: [src/models.ts:6](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L6)
 
 ## Functions
 
@@ -158,7 +158,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/createTestProxy.tsx:14](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/createTestProxy.tsx#L14)
+Defined in: [src/createTestProxy.tsx:14](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L14)
 
 ___
 
@@ -189,4 +189,4 @@ Proxy hook will rerender when called and wrap calls in act when appropriate
 
 tuple where the first result is the proxied hook and the second is the control object.
 
-Defined in: [src/createTestProxy.tsx:88](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/createTestProxy.tsx#L88)
+Defined in: [src/createTestProxy.tsx:88](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L88)

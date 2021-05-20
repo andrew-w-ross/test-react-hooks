@@ -45,7 +45,7 @@ Wrapper component passed in did not render it's children.
 
 Overrides: Error.constructor
 
-Defined in: [src/models.ts:39](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/models.ts#L39)
+Defined in: [src/models.ts:39](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L39)
 
 ## Properties
 
@@ -149,4 +149,4 @@ ___
 
 **Returns:** *string*
 
-Defined in: [src/models.ts:44](https://github.com/andrew-w-ross/test-react-hooks/blob/852bb0c/src/models.ts#L44)
+Defined in: [src/models.ts:44](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L44)
