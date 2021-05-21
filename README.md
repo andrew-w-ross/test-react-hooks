@@ -162,12 +162,176 @@ it("will update state", () => {
 As you can see the usage of the proxied version of `useState` is the same as you would do in react.
 This would suggest that a call to the proxied hook is stateful and it is.
 
-### Cleanup
+## Cleanup
 
 `test-react-hooks` exports a `cleanUp` function that needs to be called between tests.
-
 Proxied hooks can safely be shared across multiple tests as long as the `cleanUp` function is called between tests.
+
 `test-react-hooks` will look for an `afterEach` function on the global scope when imported and register the cleanup function.
 In most cases this will be done for you and if it's not a warning explaining that `cleanUp` needs to be called will be printed.
+If for some reason you want to disable this behavior define a variable on the environment `TEST_REACT_HOOKS_NO_CLEANUP`.
 
-If for some reason you want to disable this behavior define a variable on the environment called `TEST_REACT_HOOKS_NO_CLEANUP`.
+## Control Object
+
+The second element returned by `createTestProxy` in a control object.
+The control, as the name suggest, allows external control to the proxy hook.
+Why it exists will be made evident below.
+
+## Async Tests
+
+When writing an async test the issue is to wait for something to happen.
+This external control object exposes a method `waitForNextUpdate` that by default returns a promise that resolves when the component to stops updating for `3ms`.
+This should cover most uses cases but if you'll need more control of the wait behavior read on to the advanced async section.
+
+```javascript
+//Takes a function in as a dependency, calls it and then sets the value when it resolves.
+//Note don't actually use this hook, it does no error handling and doesn't check it mounted
+function useAsync(fn) {
+    const [value, setValue] = useState(null);
+    useEffect(() => {
+        fn().then(setValue);
+    }, [fn]);
+
+    return value;
+}
+
+const [prxAsync, control] = createTestProxy(useAsync);
+
+it("will wait for the value to update", async () => {
+    const fn = () => Promise.resolve(1);
+
+    {
+        const result = prxAsync(fn);
+        expect(result).toBe(null);
+    }
+
+    //Wait for the component to finish updating.
+    await control.waitForNextUpdate();
+
+    {
+        const result = prxAsync(fn);
+        expect(result).toBe(1);
+    }
+});
+```
+
+## Wrapper Component
+
+In some cases you'll need to render the hook as child of another component, normally when using context.
+
+There are two options here, it can be passed in as an option when calling `createTestProxy` or updated by setting the `wrapper` property on the control object.
+
+```javascript
+const themes = {
+    light: {
+        foreground: "#000000",
+        background: "#eeeeee",
+    },
+    dark: {
+        foreground: "#ffffff",
+        background: "#222222",
+    },
+};
+
+//Note that there is no default value so it'll return undefined
+const ThemeContext = React.createContext();
+
+const [prxContext, control] = createTestProxy(useContext, {
+    //Wrapper has to render it's children or the hook won't work
+    //If in strict mode it'll throw an error on call, if not it'll print a warning
+    wrapper: ({ children }) => (
+        <ThemeContext.Provider value={themes.light}>
+            {children}
+        </ThemeContext.Provider>
+    ),
+});
+
+it("will get the value from the wrapper in config", () => {
+    const result = prxContext(ThemeContext);
+    expect(result).toEqual(themes.light);
+});
+
+it("will update the wrapper in the control object", () => {
+    {
+        const result = prxContext(ThemeContext);
+        expect(result).toEqual(themes.light);
+    }
+
+    //Doesn't force a render next call to hook to render
+    control.wrapper = ({ children }) => (
+        <ThemeContext.Provider value={themes.dark}>
+            {children}
+        </ThemeContext.Provider>
+    );
+
+    {
+        const result = prxContext(ThemeContext);
+        expect(result).toEqual(themes.dark);
+    }
+});
+```
+
+## Unmount
+
+Control object also exposes an `unmount` function, that as the name suggests unmounts the component.
+
+```javascript
+//Calls the function passed in on unmount
+function useOnUnmount(cb) {
+    useEffect(() => {
+        return () => {
+            cb();
+        };
+    }, [cb]);
+}
+
+const [prxOnUnmount, control] = createTestProxy(useOnUnmount);
+
+it("will call the callback on unmount", () => {
+    const unmountSpy = jest.fn();
+
+    prxOnUnmount(unmountSpy);
+    expect(unmountSpy).not.toHaveBeenCalled();
+
+    control.unmount();
+    expect(unmountSpy).toHaveBeenCalled();
+});
+```
+
+## Errors
+
+This is `test-react-hooks` party trick.
+Unlike other react hook testing libraries `test-react-hooks` will hoist errors to the caller.
+It's hugely important that tests don't surprise with hidden exceptions.
+
+Let's have a look at all the situations this could happen.
+
+```javascript
+function useError(when) {
+    if (when === "render") throw new Error(when);
+    useEffect(() => {
+        if (when === "aftermount") throw new Error(when);
+        return () => {
+            if (when === "unmount") {
+                throw new Error(when);
+            }
+        };
+    }, [when]);
+}
+
+const [prxError, control] = createTestProxy(useError);
+
+it("will throw straight away", () => {
+    expect(() => prxError("render")).toThrowError("render");
+});
+
+it("will throw after mount", () => {
+    expect(() => prxError("aftermount")).toThrowError("aftermount");
+});
+
+it("will throw on unmount", () => {
+    prxError("unmount");
+    //Even on unmount it'll capture
+    expect(() => control.unmount()).toThrowError();
+});
+```
