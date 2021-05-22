@@ -38,7 +38,7 @@ Something has gone wrong please report this issue.
 
 Overrides: Error.constructor
 
-Defined in: [src/models.ts:54](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L54)
+Defined in: [src/models.ts:60](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L60)
 
 ## Properties
 

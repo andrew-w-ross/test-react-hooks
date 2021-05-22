@@ -100,11 +100,7 @@ it("will warn if act function is overridden", () => {
 it("will wait for one of the promises to resolve in race", async () => {
     const { createWaiter, updateSubject } = createUpdateStream();
 
-    createWaiter()
-        .iterationMode("race")
-        .updateCount(1)
-        .updateCount(2)
-        .then(resolveSpy);
+    createWaiter().waitRace().updateCount(1).updateCount(2).then(resolveSpy);
     //force execution
     await wait();
     expect(resolveSpy).not.toHaveBeenCalled();
@@ -115,10 +111,10 @@ it("will wait for one of the promises to resolve in race", async () => {
     expect(resolveSpy).toHaveBeenCalled();
 });
 
-it("will wait for all of the promises to resolve in race", async () => {
+it("will wait for all of the promises to resolve in all", async () => {
     const { createWaiter, updateSubject } = createUpdateStream();
 
-    createWaiter().iterationMode("all").updateCount(2).then(resolveSpy);
+    createWaiter().waitAll().updateCount(2).then(resolveSpy);
     await wait();
     expect(resolveSpy).not.toHaveBeenCalled();
 

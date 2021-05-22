@@ -33,6 +33,12 @@ Use waitForNextUpdate() before calling.`;
     }
 }
 
+export class AlreadyExecutedError extends Error {
+    constructor() {
+        super("Already executed");
+    }
+}
+
 /**
  * Wrapper component passed in did not render it's children.
  */

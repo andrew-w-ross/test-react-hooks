@@ -46,7 +46,7 @@ Probably means that you'll need to wait for the suspension to complete.
 
 Overrides: Error.constructor
 
-Defined in: [src/models.ts:17](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L17)
+Defined in: [src/models.ts:17](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L17)
 
 ## Properties
 
@@ -150,4 +150,4 @@ ___
 
 **Returns:** *string*
 
-Defined in: [src/models.ts:26](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L26)
+Defined in: [src/models.ts:26](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L26)

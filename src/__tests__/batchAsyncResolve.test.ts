@@ -5,9 +5,10 @@ import { wait } from "../utils";
 //Use real timers here, this library doesn't assume jest as a runner
 function useBatchAsync(ms = 0) {
     const [value, setValue] = useState(0);
-    const mounted = useRef(true);
+    const mounted = useRef(false);
 
     useEffect(() => {
+        mounted.current = true;
         const run = async () => {
             for (let i = 0; i < 3; i++) {
                 await wait(ms);

@@ -6,13 +6,16 @@ test-react-hooks - v*
 
 ### Classes
 
+- [AlreadyExecutedError](classes/alreadyexecutederror.md)
 - [AlreadySuspendedError](classes/alreadysuspendederror.md)
 - [CheckWrapperError](classes/checkwrappererror.md)
 - [UnknownError](classes/unknownerror.md)
+- [UpdateWaiter](classes/updatewaiter.md)
 
 ### Type aliases
 
 - [CreateTestProxyOptions](README.md#createtestproxyoptions)
+- [DefaultCreateTestProxyOptions](README.md#defaultcreatetestproxyoptions)
 - [Suspended](README.md#suspended)
 - [TestHook](README.md#testhook)
 - [TestProxyControl](README.md#testproxycontrol)
@@ -20,6 +23,7 @@ test-react-hooks - v*
 
 ### Variables
 
+- [DEFAULT\_OPTIONS](README.md#default_options)
 - [SUSPENDED](README.md#suspended)
 
 ### Functions
@@ -32,7 +36,15 @@ test-react-hooks - v*
 
 ### CreateTestProxyOptions
 
-Ƭ **CreateTestProxyOptions**: *object*
+Ƭ **CreateTestProxyOptions**: *Partial*<Omit<[*DefaultCreateTestProxyOptions*](README.md#defaultcreatetestproxyoptions), ``"waiterDefault"``\>\>
+
+Defined in: [src/createTestProxy.tsx:97](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L97)
+
+___
+
+### DefaultCreateTestProxyOptions
+
+Ƭ **DefaultCreateTestProxyOptions**: *object*
 
 Options for [createTestProxy](README.md#createtestproxy)
 
@@ -40,13 +52,14 @@ Options for [createTestProxy](README.md#createtestproxy)
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `actFn?` | *typeof* [*act*](README.md#act) | The act function that react needs, use this if you need to use multiple react [multiple-renderers](https://reactjs.org/docs/testing-recipes.html#multiple-renderers) |
-| `autoInvokeSuspense?` | *boolean* | When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed. If this is set to false {@link waitForNextUpdate} will not reject on error and instead the next invocation will throw. |
-| `strict?` | *boolean* | Should the proxy throw an error or print a warning, defaults to true. |
+| `actFn` | *typeof* [*act*](README.md#act) | The act function that react needs, use this if you need to use multiple react [multiple-renderers](https://reactjs.org/docs/testing-recipes.html#multiple-renderers) |
+| `autoInvokeSuspense` | *boolean* | When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed. If this is set to false {@link waitForNextUpdate} will not reject on error and instead the next invocation will throw. |
+| `strict` | *boolean* | Should the proxy throw an error or print a warning, defaults to true. |
 | `testRendererOptions?` | TestRendererOptions | Options that are forwarded to [react-test-renderer](https://reactjs.org/docs/test-renderer.html) |
-| `wrapper?` | [*WrapperComponent*](README.md#wrappercomponent) | Wrapper component for the hook callback, make sure children is rendered |
+| `waiterDefault` | (`waiter`: [*UpdateWaiter*](classes/updatewaiter.md)) => *any* | If the updateWaiter has no waiters this function will default it. |
+| `wrapper` | [*WrapperComponent*](README.md#wrappercomponent) | Wrapper component for the hook callback, make sure children is rendered |
 
-Defined in: [src/createTestProxy.tsx:49](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L49)
+Defined in: [src/createTestProxy.tsx:55](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L55)
 
 ___
 
@@ -56,7 +69,7 @@ ___
 
 Type alias for the [SUSPENDED](README.md#suspended) symbol
 
-Defined in: [src/models.ts:11](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L11)
+Defined in: [src/models.ts:11](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L11)
 
 ___
 
@@ -76,7 +89,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/createTestProxy.tsx:44](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L44)
+Defined in: [src/createTestProxy.tsx:50](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L50)
 
 ___
 
@@ -84,7 +97,7 @@ ___
 
 Ƭ **TestProxyControl**: *ReturnType*<*typeof* [*createTestProxy*](README.md#createtestproxy)\>[``1``]
 
-Defined in: [src/createTestProxy.tsx:217](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L217)
+Defined in: [src/createTestProxy.tsx:243](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L243)
 
 ___
 
@@ -94,9 +107,17 @@ ___
 
 Wrapper component to take in and render the children
 
-Defined in: [src/createTestProxy.tsx:40](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L40)
+Defined in: [src/createTestProxy.tsx:46](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L46)
 
 ## Variables
+
+### DEFAULT\_OPTIONS
+
+• `Const` **DEFAULT\_OPTIONS**: [*DefaultCreateTestProxyOptions*](README.md#defaultcreatetestproxyoptions)
+
+Defined in: [src/createTestProxy.tsx:88](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L88)
+
+___
 
 ### SUSPENDED
 
@@ -104,7 +125,7 @@ Defined in: [src/createTestProxy.tsx:40](https://github.com/andrew-w-ross/test-r
 
 Symbol that is returned if the call to that function is suspended.
 
-Defined in: [src/models.ts:6](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/models.ts#L6)
+Defined in: [src/models.ts:6](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L6)
 
 ## Functions
 
@@ -158,13 +179,13 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/createTestProxy.tsx:14](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L14)
+Defined in: [src/createTestProxy.tsx:20](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L20)
 
 ___
 
 ### createTestProxy
 
-▸ **createTestProxy**<THook\>(`hook`: THook, `options?`: [*CreateTestProxyOptions*](README.md#createtestproxyoptions)): readonly [THook, { `unmount`: () => *void* ; `waitForNextUpdate`: () => *UpdateWaiter* ; `wrapper`:   }]
+▸ **createTestProxy**<THook\>(`hook`: THook, `options?`: [*CreateTestProxyOptions*](README.md#createtestproxyoptions)): readonly [THook, { `unmount`: () => *void* ; `waitForNextUpdate`: () => [*UpdateWaiter*](classes/updatewaiter.md) ; `wrapper`:   }]
 
 Main function for `test-react-hooks`
 Creates a proxy hook and a control object for that hook
@@ -180,13 +201,13 @@ Proxy hook will rerender when called and wrap calls in act when appropriate
 
 #### Parameters
 
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `hook` | THook | - | to proxy |
-| `options` | [*CreateTestProxyOptions*](README.md#createtestproxyoptions) | {} | - |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `hook` | THook | to proxy |
+| `options?` | [*CreateTestProxyOptions*](README.md#createtestproxyoptions) | - |
 
-**Returns:** readonly [THook, { `unmount`: () => *void* ; `waitForNextUpdate`: () => *UpdateWaiter* ; `wrapper`:   }]
+**Returns:** readonly [THook, { `unmount`: () => *void* ; `waitForNextUpdate`: () => [*UpdateWaiter*](classes/updatewaiter.md) ; `wrapper`:   }]
 
 tuple where the first result is the proxied hook and the second is the control object.
 
-Defined in: [src/createTestProxy.tsx:88](https://github.com/andrew-w-ross/test-react-hooks/blob/bc5d020/src/createTestProxy.tsx#L88)
+Defined in: [src/createTestProxy.tsx:112](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L112)

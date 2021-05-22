@@ -1,51 +1,42 @@
-[test-react-hooks - v*](../README.md) / CheckWrapperError
+[test-react-hooks - v*](../README.md) / AlreadyExecutedError
 
-# Class: CheckWrapperError
-
-Wrapper component passed in did not render it's children.
+# Class: AlreadyExecutedError
 
 ## Hierarchy
 
 - *Error*
 
-  ↳ **CheckWrapperError**
+  ↳ **AlreadyExecutedError**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](checkwrappererror.md#constructor)
+- [constructor](alreadyexecutederror.md#constructor)
 
 ### Properties
 
-- [message](checkwrappererror.md#message)
-- [name](checkwrappererror.md#name)
-- [stack](checkwrappererror.md#stack)
-- [prepareStackTrace](checkwrappererror.md#preparestacktrace)
-- [stackTraceLimit](checkwrappererror.md#stacktracelimit)
+- [message](alreadyexecutederror.md#message)
+- [name](alreadyexecutederror.md#name)
+- [stack](alreadyexecutederror.md#stack)
+- [prepareStackTrace](alreadyexecutederror.md#preparestacktrace)
+- [stackTraceLimit](alreadyexecutederror.md#stacktracelimit)
 
 ### Methods
 
-- [captureStackTrace](checkwrappererror.md#capturestacktrace)
-- [getErrorMessage](checkwrappererror.md#geterrormessage)
+- [captureStackTrace](alreadyexecutederror.md#capturestacktrace)
 
 ## Constructors
 
 ### constructor
 
-\+ **new CheckWrapperError**(`wrapper`: *ComponentType*<any\>): [*CheckWrapperError*](checkwrappererror.md)
+\+ **new AlreadyExecutedError**(): [*AlreadyExecutedError*](alreadyexecutederror.md)
 
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `wrapper` | *ComponentType*<any\> |
-
-**Returns:** [*CheckWrapperError*](checkwrappererror.md)
+**Returns:** [*AlreadyExecutedError*](alreadyexecutederror.md)
 
 Overrides: Error.constructor
 
-Defined in: [src/models.ts:45](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L45)
+Defined in: [src/models.ts:36](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L36)
 
 ## Properties
 
@@ -134,19 +125,3 @@ Create .stack property on a target object
 Inherited from: Error.captureStackTrace
 
 Defined in: node_modules/@types/node/globals.d.ts:4
-
-___
-
-### getErrorMessage
-
-▸ `Static` **getErrorMessage**(`wrapper`: *ComponentType*<any\>): *string*
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `wrapper` | *ComponentType*<any\> |
-
-**Returns:** *string*
-
-Defined in: [src/models.ts:50](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L50)

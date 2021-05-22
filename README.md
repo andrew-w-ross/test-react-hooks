@@ -10,25 +10,26 @@ Simplest testing library for react hooks.
 
 ## Contents
 
-- [test-react-hooks ⚓️](#test-react-hooks-️)
-  - [Contents](#contents)
-  - [Installing](#installing)
-- [Quick Start](#quick-start)
-  - [Examples](#examples)
-  - [Api Documentation](#api-documentation)
-  - [Why use test-react-hooks?](#why-use-test-react-hooks)
-- [Slower start](#slower-start)
-  - [A note on naming](#a-note-on-naming)
-  - [Cleanup](#cleanup)
-- [Control Object](#control-object)
-  - [Async](#async)
-  - [Wrapper Component](#wrapper-component)
-  - [Unmount](#unmount)
-- [Advanced](#advanced)
-  - [Suspense](#suspense)
-    - [Suspense Caveat](#suspense-caveat)
-  - [Errors](#errors)
-    - [Errors Caveat](#errors-caveat)
+-   [test-react-hooks ⚓️](#test-react-hooks-️)
+    -   [Contents](#contents)
+    -   [Installing](#installing)
+-   [Quick Start](#quick-start)
+    -   [Examples](#examples)
+    -   [Api Documentation](#api-documentation)
+    -   [Why use test-react-hooks?](#why-use-test-react-hooks)
+-   [Slower start](#slower-start)
+    -   [A note on naming](#a-note-on-naming)
+    -   [Cleanup](#cleanup)
+-   [Control Object](#control-object)
+    -   [Async](#async)
+    -   [Wrapper Component](#wrapper-component)
+    -   [Unmount](#unmount)
+-   [Advanced](#advanced)
+    -   [Suspense](#suspense)
+        -   [Suspense Caveat](#suspense-caveat)
+    -   [Errors](#errors)
+        -   [Errors Caveat](#errors-caveat)
+    -   [Advanced Async](#advanced-async)
 
 ## Installing
 
@@ -575,3 +576,36 @@ The promise in this case is hidden to both `react` and `test-react-hooks`.
 The only way of determining an unhandled rejection occurred is to listen for `process.on('unhandledRejection')`.
 You're testing framework would probably already register a listener and would fail the test already at this point.
 It's just too invasive for a testing library to mess around with the testing environment itself.
+
+## Advanced Async
+
+`waitForNextUpdate` doesn't just return a `Promise` it returns an instance of [UpdateWaiter](docs/api/classes/updatewaiter.md) that extends a `Promise`.
+Update waiter is a fluent api that can wait for specific changes before resolving.
+
+```javascript
+function useBatchAsync(ms = 1) {
+    const [value, setValue] = useState(0);
+    const mounted = useRef(false);
+
+    useEffect(() => {
+        mounted.current = true;
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                //Don't set if not mounted
+                if (mounted.current) {
+                    setValue((i) => i + 1);
+                }
+            }, [i * ms]);
+        }
+        return () => {
+            mounted.current = false;
+        };
+    }, [ms]);
+
+    return value;
+}
+
+const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
+```
+
+The default waiting method is to debounce for `3ms` in other words it'll wait for `3ms` before stopping.
