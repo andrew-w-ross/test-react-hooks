@@ -56,11 +56,13 @@ it("will wait for suspense", async () => {
 });
 
 it("will throw on waitForNextUpdate if suspense rejects", async () => {
-    const throwStuff = () => Promise.reject("Boom Suspense");
+    const throwStuff = () => Promise.reject(new Error("Boom Suspense"));
 
     {
         expect(prxAsyncSuspense(throwStuff)).toBe(SUSPENDED);
     }
 
-    await expect(control.waitForNextUpdate()).rejects.toBe("Boom Suspense");
+    await expect(control.waitForNextUpdate()).rejects.toThrowError(
+        "Boom Suspense",
+    );
 });

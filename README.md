@@ -10,20 +10,27 @@ Simplest testing library for react hooks.
 
 ## Contents
 
--   [test-react-hooks ⚓️](#test-react-hooks-️)
-    -   [Contents](#contents)
-    -   [Get Started](#get-started)
-    -   [Usage](#usage)
-    -   [Examples](#examples)
-    -   [Api](#api)
-        -   [createTestProxy](#createtestproxy)
-            -   [Arguments](#arguments)
-            -   [Result](#result)
-        -   [UpdateWaiter](#updatewaiter)
-        -   [cleanup](#cleanup)
-        -   [act](#act)
+- [test-react-hooks ⚓️](#test-react-hooks-️)
+  - [Contents](#contents)
+  - [Installing](#installing)
+- [Quick Start](#quick-start)
+  - [Examples](#examples)
+  - [Api Documentation](#api-documentation)
+  - [Why use test-react-hooks?](#why-use-test-react-hooks)
+- [Slower start](#slower-start)
+  - [A note on naming](#a-note-on-naming)
+  - [Cleanup](#cleanup)
+- [Control Object](#control-object)
+  - [Async](#async)
+  - [Wrapper Component](#wrapper-component)
+  - [Unmount](#unmount)
+- [Advanced](#advanced)
+  - [Suspense](#suspense)
+    - [Suspense Caveat](#suspense-caveat)
+  - [Errors](#errors)
+    - [Errors Caveat](#errors-caveat)
 
-## Get Started
+## Installing
 
 To install add `test-react-hooks` and it's peer dependencies `react` and `react-test-renderer`.
 
@@ -32,7 +39,10 @@ Depending on your package manager run one of the following commands.
 -   `yarn add test-react-hooks react react-test-renderer -D`
 -   `npm i test-react-hooks react react-test-renderer --save-dev`
 
-## Quick Start
+# Quick Start
+
+The entry point for `test-react-hooks` is `createTestProxy` method that returns a tuple with two elements.
+The first element is the proxied hook and the second is a control object but let's ignore that for now.
 
 ```javascript
 import { createTestProxy } from "test-react-hooks";
@@ -48,8 +58,8 @@ const useCounter = (initial = 0, inc = 1) => {
     };
 };
 
-//Proxy of your hook, use it like you would in a component
-//Internally calls render for the hook and act on everything else
+//Proxy of your hook, use it like you would in a component.
+//Internally ensures your hook is rendered inside of a component with react-test-renderer
 const [prxCounter] = createTestProxy(useCounter);
 
 it("will increment by one", () => {
@@ -116,7 +126,7 @@ Error handling will be covered in more detail below.
 
 Overall it attempts to get out of your way without any surprises on how to write your tests or how they'll behave when used in react.
 
-## Slower start
+# Slower start
 
 The main entry point for `test-react-hooks` is [createTestProxy](docs/api/readme.md#createtestprox).
 It takes in two arguments the first is the hook that you'll want to test and the second is an optional [options argument](docs/api/readme.md#createtestproxyoptions).
@@ -132,7 +142,7 @@ const [prxState, control] = createTestProxy(useState);
 `createTestProxy` returns a tuple with two elements the first is a proxied version of your hook and the second is a control object.
 As a naming convention `use` is replaced with `prx`.
 
-### A note on naming
+## A note on naming
 
 > As a style choice replacing `use` with `prx` gives a hint at a relation to the original hook, stops the warning from eslint and avoids a symbol clash.
 > With that being said the name has no technical requirement so naming it what you wish is fine.
@@ -165,21 +175,20 @@ This would suggest that a call to the proxied hook is stateful and it is.
 ## Cleanup
 
 `test-react-hooks` exports a `cleanUp` function that needs to be called between tests.
-Proxied hooks can safely be shared across multiple tests as long as the `cleanUp` function is called between tests.
+Proxied hooks can safely be shared across multiple tests as long as the `cleanUp` function is called between tests resetting it's state.
 
 `test-react-hooks` will look for an `afterEach` function on the global scope when imported and register the cleanup function.
 In most cases this will be done for you and if it's not a warning explaining that `cleanUp` needs to be called will be printed.
-If for some reason you want to disable this behavior define a variable on the environment `TEST_REACT_HOOKS_NO_CLEANUP`.
+If for some reason you want to disable this behavior define a variable on the environment `TEST_REACT_HOOKS_NO_CLEANUP` but be warned you'll probably break all your tests.
 
-## Control Object
+# Control Object
 
 The second element returned by `createTestProxy` in a control object.
 The control, as the name suggest, allows external control to the proxy hook.
-Why it exists will be made evident below.
 
-## Async Tests
+## Async
 
-When writing an async test the issue is to wait for something to happen.
+When writing an async test the issue is to wait for the next update.
 This external control object exposes a method `waitForNextUpdate` that by default returns a promise that resolves when the component to stops updating for `3ms`.
 This should cover most uses cases but if you'll need more control of the wait behavior read on to the advanced async section.
 
@@ -246,11 +255,6 @@ const [prxContext, control] = createTestProxy(useContext, {
     ),
 });
 
-it("will get the value from the wrapper in config", () => {
-    const result = prxContext(ThemeContext);
-    expect(result).toEqual(themes.light);
-});
-
 it("will update the wrapper in the control object", () => {
     {
         const result = prxContext(ThemeContext);
@@ -268,6 +272,12 @@ it("will update the wrapper in the control object", () => {
         const result = prxContext(ThemeContext);
         expect(result).toEqual(themes.dark);
     }
+});
+
+//Note that if the wrapper is passed in as a parameter on the config object on reset on cleanup
+it("will get the value from the wrapper in config", () => {
+    const result = prxContext(ThemeContext);
+    expect(result).toEqual(themes.light);
 });
 ```
 
@@ -298,15 +308,115 @@ it("will call the callback on unmount", () => {
 });
 ```
 
+# Advanced
+
+Everything below is quite technical and probably not necessary to understand for basic testing.
+If you've not written any tests yet go away install `test-react-hooks` and write some tests.
+
+## Suspense
+
+[Here is the documentation for it](https://reactjs.org/docs/concurrent-mode-suspense.html) but a
+a quick intro on how suspense works it's a promise thrown during render.
+React will use the promise to determine when to stop suspending.
+
+Suspense is tested in the essentially the same way that async hooks are but with a caveat.
+
+```javascript
+//Records the execution state of the function, the function used as the key.
+const RESULT_CACHE = new Map();
+
+export function useAsyncSuspense<TResult>(fn: () => Promise<TResult>): TResult {
+    if (!RESULT_CACHE.has(fn)) {
+        const execution = fn()
+            .then((result) => {
+                RESULT_CACHE.set(fn, { type: "completed", result });
+            })
+            .catch((error) => {
+                RESULT_CACHE.set(fn, { type: "error", error });
+            });
+        RESULT_CACHE.set(fn, { type: "running", execution });
+    }
+
+    return useMemo(() => {
+        const state = RESULT_CACHE.get(fn)!;
+
+        switch (state.type) {
+            case "running":
+                throw state.execution;
+            case "error":
+                throw state.error;
+            default:
+                return state.result;
+        }
+    }, [fn]);
+}
+
+afterEach(() => {
+    RESULT_CACHE.clear();
+});
+
+const [prxAsyncSuspense, control] = createTestProxy(useAsyncSuspense);
+
+it("will wait for suspense", async () => {
+    const getStuff = () => Promise.resolve(1);
+    {
+        //Suspends here which might be a bit surprising
+        prxAsyncSuspense(getStuff));
+    }
+
+    //Wait for the hook to complete updating
+    await control.waitForNextUpdate();
+
+    {
+        const result = prxAsyncSuspense(getStuff);
+        expect(result).toBe(1);
+    }
+});
+```
+
+### Suspense Caveat
+
+What's the caveat then? Take a closer look at the first call to the proxy.
+
+```javascript
+//Didn't this function throw on first call to suspend itself? What does this return then?
+prxAsyncSuspense(getStuff));
+```
+
+To signify that the hook is now in a suspended state `test-react-hooks` exports a symbol `SUSPENDED`.
+If you absolutely need to check that the hook is in a suspended state you can check against the `SUSPENDED` symbol.
+
+```javascript
+import { SUSPENDED } from "test-react-hooks";
+
+//Using the code mentioned above
+
+it("will return suspense", async () => {
+    const getStuff = () => Promise.resolve(1);
+    {
+        const result = prxAsyncSuspense(getStuff);
+        expect(result).toBe(SUSPENDED);
+    }
+
+    await control.waitForNextUpdate();
+
+    {
+        const result = prxAsyncSuspense(getStuff);
+        expect(result).toEqual(1);
+    }
+});
+```
+
 ## Errors
 
 This is `test-react-hooks` party trick.
 Unlike other react hook testing libraries `test-react-hooks` will hoist errors to the caller.
-It's hugely important that tests don't surprise with hidden exceptions.
+It's hugely important that tests don't surprise with hidden exceptions, instead throwing to the call.
 
 Let's have a look at all the situations this could happen.
 
 ```javascript
+//When argument determines where in the lifecycle to the error should throw
 function useError(when) {
     if (when === "render") throw new Error(when);
     useEffect(() => {
@@ -322,16 +432,146 @@ function useError(when) {
 const [prxError, control] = createTestProxy(useError);
 
 it("will throw straight away", () => {
+    //Error directly on render
     expect(() => prxError("render")).toThrowError("render");
 });
 
 it("will throw after mount", () => {
+    //Error just after mount
     expect(() => prxError("aftermount")).toThrowError("aftermount");
 });
 
 it("will throw on unmount", () => {
     prxError("unmount");
-    //Even on unmount it'll capture
+    //Even on unmount it'll hoist any errors caught
     expect(() => control.unmount()).toThrowError();
 });
 ```
+
+It'll also hoist errors from returned functions.
+
+```javascript
+function useMemberError() {
+    function fnThrow() {
+        throw new Error("boom");
+    }
+    return {
+        fnThrow,
+        deep: {
+            nested: {
+                fnThrow,
+            },
+        },
+    };
+}
+
+const [prxMemberError] = createTestProxy(useMemberError);
+
+it("will throw on member call", () => {
+    const { fnThrow } = prxMemberError();
+    expect(fnThrow).toThrowError("boom");
+});
+
+it("will throw on deep member call", () => {
+    const result = prxMemberError();
+    expect(result.deep.nested.fnThrow).toThrowError("boom");
+});
+```
+
+It'll even hoist from a reducer calls.
+
+```javascript
+const initialState = { count: 0 };
+
+function reducer(state, action) {
+    switch (action.type) {
+        case "increment":
+            return { count: state.count + 1 };
+        case "decrement":
+            return { count: state.count - 1 };
+        case "throw":
+            throw new Error("Boom");
+        default:
+            return state;
+    }
+}
+
+const [prxReducer] = createTestProxy(useReducer);
+
+it("will handle multiple dispatches", () => {
+    const [, dispatch] = prxReducer(reducer, initialState);
+    dispatch({ type: "increment" });
+    dispatch({ type: "increment" });
+    dispatch({ type: "increment" });
+    dispatch({ type: "decrement" });
+
+    const [state] = prxReducer(reducer, initialState);
+    expect(state.count).toBe(2);
+});
+
+it("will catch the error", () => {
+    const [, dispatch] = prxReducer(reducer, initialState);
+
+    expect(() => dispatch({ type: "throw" })).toThrowError("Boom");
+});
+```
+
+Recall the [suspense example](#Suspense) above.
+If the suspended promise ultimately rejects then `waitForNextUpdate` will reject.
+
+```javascript
+it("will throw on waitForNextUpdate if suspense rejects", async () => {
+    const throwStuff = () => Promise.reject(new Error("Boom Suspense"));
+    prxAsyncSuspense(throwStuff));
+
+    //Rejects if the suspended promise rejects
+    await expect(control.waitForNextUpdate()).rejects.toThrowError(
+        "Boom Suspense",
+    );
+});
+```
+
+### Errors Caveat
+
+Recall the [async example](#async) above, what happens if the promise rejects?
+
+```javascript
+it("will not work on unhandled promise rejections", async () => {
+    const throwFn = () => Promise.reject(new Error("Boom Async"));
+
+    {
+        const result = prxAsync(throwFn);
+        expect(result).toBe(null);
+    }
+
+    //It should reject right?
+    await expect(control.waitForNextUpdate()).rejects.toThrowError(
+        "Boom Async",
+    );
+});
+```
+
+In jest you'll get the following error:
+
+```bash
+ ● will not work on unhandled promise rejections
+
+    Boom Async
+
+      31 |
+      32 | it("will not work on unhandled promise rejections", async () => {
+    > 33 |     const throwFn = () => Promise.reject(new Error("Boom Async"));
+         |                                          ^
+      34 |
+      35 |     {
+      36 |         const result = prxAsync(throwFn);
+
+```
+
+You're testing framework might differ but overall the behavior should generally be the same.
+Why does this not reject on `waitForNextUpdate`?
+
+The promise in this case is hidden to both `react` and `test-react-hooks`.
+The only way of determining an unhandled rejection occurred is to listen for `process.on('unhandledRejection')`.
+You're testing framework would probably already register a listener and would fail the test already at this point.
+It's just too invasive for a testing library to mess around with the testing environment itself.

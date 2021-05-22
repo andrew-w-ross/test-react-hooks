@@ -36,10 +36,10 @@ it("will throw after mount", () => {
 
 it("will throw on unmount", () => {
     prxError("unmount");
-    expect(() => control.unmount()).toThrowError();
+    expect(() => control.unmount()).toThrowError("unmount");
 });
 
 it("will throw on deps change", () => {
     prxError("unmount", [1]);
-    expect(() => prxError("unmount", [2])).toThrowError();
+    expect(() => prxError("unmount", [2])).toThrowError("unmount");
 });
