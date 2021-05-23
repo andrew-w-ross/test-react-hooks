@@ -7,7 +7,7 @@ import type {
 import { act, create } from "react-test-renderer";
 import type { Subject } from "rxjs";
 import { ErrorBoundary } from "./ErrorBoundary";
-import type { UpdateEvent } from "./updateWaiter";
+import type { UpdateEvent } from "./models";
 import { randomNumber } from "./utils";
 
 export class RenderState {

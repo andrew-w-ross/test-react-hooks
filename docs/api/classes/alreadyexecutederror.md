@@ -36,8 +36,6 @@
 
 Overrides: Error.constructor
 
-Defined in: [src/models.ts:36](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L36)
-
 ## Properties
 
 ### message
@@ -45,8 +43,6 @@ Defined in: [src/models.ts:36](https://github.com/andrew-w-ross/test-react-hooks
 • **message**: *string*
 
 Inherited from: Error.message
-
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
@@ -56,8 +52,6 @@ ___
 
 Inherited from: Error.name
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
-
 ___
 
 ### stack
@@ -65,8 +59,6 @@ ___
 • `Optional` **stack**: *string*
 
 Inherited from: Error.stack
-
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:975
 
 ___
 
@@ -93,8 +85,6 @@ Optional override for formatting stack traces
 
 Inherited from: Error.prepareStackTrace
 
-Defined in: node_modules/@types/node/globals.d.ts:11
-
 ___
 
 ### stackTraceLimit
@@ -102,8 +92,6 @@ ___
 ▪ `Static` **stackTraceLimit**: *number*
 
 Inherited from: Error.stackTraceLimit
-
-Defined in: node_modules/@types/node/globals.d.ts:13
 
 ## Methods
 
@@ -123,5 +111,3 @@ Create .stack property on a target object
 **Returns:** *void*
 
 Inherited from: Error.captureStackTrace
-
-Defined in: node_modules/@types/node/globals.d.ts:4

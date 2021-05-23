@@ -47,6 +47,9 @@ export type WrapperComponent = ComponentType<{ children: ReactNode }>;
 
 const DefaultWrapper: WrapperComponent = ({ children }) => <>{children}</>;
 
+/**
+ * Type definition for a hook
+ */
 export type TestHook = (...args: any[]) => any;
 
 /**

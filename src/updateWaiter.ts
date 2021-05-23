@@ -10,6 +10,7 @@ import {
 } from "rxjs";
 import { bufferCount, debounceTime, filter, map, take } from "rxjs/operators";
 import { DEFAULT_OPTIONS } from "./createTestProxy";
+import type { UpdateEvent } from "./models";
 import { AlreadyExecutedError } from "./models";
 import { promiseWithExternalExecutor } from "./utils";
 
@@ -19,21 +20,19 @@ import { promiseWithExternalExecutor } from "./utils";
 export type WaitMode = "race" | "all";
 
 /**
- *
- */
-export type UpdateEvent =
-    | { async: boolean; error?: undefined }
-    | { error: Error; async?: undefined };
-
-/**
  * UpdateWaiter is a fluent api that will resolve when it's conditions are met.
  */
 export class UpdateWaiter extends Promise<void> {
+    /** @internal */
     public executed = false;
+    /** @internal */
     public waiters: ObservableInput<any>[] = [];
+    /** @internal */
     public waitMode: WaitMode = "all";
+    /** @internal */
     public _actFn?: () => any | Promise<any>;
 
+    /** @internal */
     constructor(
         executor: (
             resolve: (value: void | PromiseLike<void>) => void,

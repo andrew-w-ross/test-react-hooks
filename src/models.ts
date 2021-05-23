@@ -1,6 +1,15 @@
 import type { ComponentType } from "react";
 
 /**
+ * Update events while rendering
+ *  If async is true then the update is happening in response to something other than a direct call to the hook.
+ *  If error is defined then something went wrong.
+ */
+export type UpdateEvent =
+    | { async: boolean; error?: undefined }
+    | { error: Error; async?: undefined };
+
+/**
  * Symbol that is returned if the call to that function is suspended.
  */
 export const SUSPENDED = Symbol("Suspended Result");

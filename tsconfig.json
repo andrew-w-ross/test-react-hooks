@@ -24,6 +24,7 @@
         "out": "docs/api",
         "name": "test-react-hooks",
         "includeVersion": true,
-        "readme": "none"
+        "readme": "none",
+        "disableSources": true
     }
 }

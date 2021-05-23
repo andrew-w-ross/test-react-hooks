@@ -10,26 +10,32 @@ Simplest testing library for react hooks.
 
 ## Contents
 
--   [test-react-hooks ⚓️](#test-react-hooks-️)
-    -   [Contents](#contents)
-    -   [Installing](#installing)
--   [Quick Start](#quick-start)
-    -   [Examples](#examples)
-    -   [Api Documentation](#api-documentation)
-    -   [Why use test-react-hooks?](#why-use-test-react-hooks)
--   [Slower start](#slower-start)
-    -   [A note on naming](#a-note-on-naming)
-    -   [Cleanup](#cleanup)
--   [Control Object](#control-object)
-    -   [Async](#async)
-    -   [Wrapper Component](#wrapper-component)
-    -   [Unmount](#unmount)
--   [Advanced](#advanced)
-    -   [Suspense](#suspense)
-        -   [Suspense Caveat](#suspense-caveat)
-    -   [Errors](#errors)
-        -   [Errors Caveat](#errors-caveat)
-    -   [Advanced Async](#advanced-async)
+- [test-react-hooks ⚓️](#test-react-hooks-️)
+  - [Contents](#contents)
+  - [Installing](#installing)
+- [Quick Start](#quick-start)
+  - [Examples](#examples)
+  - [Api Documentation](#api-documentation)
+  - [Why use test-react-hooks?](#why-use-test-react-hooks)
+- [Slower start](#slower-start)
+  - [A note on naming](#a-note-on-naming)
+  - [Cleanup](#cleanup)
+- [Control Object](#control-object)
+  - [Async](#async)
+  - [Wrapper Component](#wrapper-component)
+  - [Unmount](#unmount)
+- [Advanced](#advanced)
+  - [Suspense](#suspense)
+    - [Suspense Caveat](#suspense-caveat)
+  - [Errors](#errors)
+    - [Errors Caveat](#errors-caveat)
+  - [Advanced Async](#advanced-async)
+    - [Debounce](#debounce)
+    - [Update Count](#update-count)
+    - [Custom Waiters](#custom-waiters)
+    - [Using Fake Timers](#using-fake-timers)
+- [Technical Bits](#technical-bits)
+  - [What happened to the `act` calls?](#what-happened-to-the-act-calls)
 
 ## Installing
 
@@ -589,13 +595,13 @@ function useBatchAsync(ms = 1) {
 
     useEffect(() => {
         mounted.current = true;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 1; i <= 3; i++) {
             setTimeout(() => {
                 //Don't set if not mounted
                 if (mounted.current) {
                     setValue((i) => i + 1);
                 }
-            }, [i * ms]);
+            }, i * ms);
         }
         return () => {
             mounted.current = false;
@@ -608,4 +614,212 @@ function useBatchAsync(ms = 1) {
 const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
 ```
 
-The default waiting method is to debounce for `3ms` in other words it'll wait for `3ms` before stopping.
+### Debounce
+
+The default waiting method is to [debounce](docs/api/classes/updatewaiter.md#debounce) for `3ms` in other words it'll wait for updates to stop for `3ms` before resolving. Note it'll still wait for the first update before resolving.
+
+```javascript
+it("will run batch async operations", async () => {
+    {
+        const result = prxBatchAsync();
+        //Initial value
+        expect(result).toEqual(0);
+    }
+
+    await control.waitForNextUpdate();
+
+    {
+        const result = prxBatchAsync();
+        expect(result).toEqual(3);
+    }
+});
+```
+
+If you wanted to wait for longer just call the debounce function on the fluent api.
+
+```javascript
+it("will run batch async operations with a longer debounce", async () => {
+    {
+        const result = prxBatchAsync(5);
+        //Initial value
+        expect(result).toEqual(0);
+    }
+
+    //Will now wait for 6ms before resolving
+    await control.waitForNextUpdate().debounce(6);
+
+    {
+        const result = prxBatchAsync(5);
+        expect(result).toEqual(3);
+    }
+});
+```
+
+### Update Count
+
+If you want to wait for a specific amount of updates before resolving there's an [updateCount](docs/api/classes/updatewaiter.md#updateCount) method.
+It takes an optional argument to wait for set amount of updates to occur before resolving.
+
+> Update count can make your tests somewhat brittle so use with caution.
+
+```javascript
+it("will wait for each update", async () => {
+    {
+        const value = prxBatchAsync();
+        expect(value).toEqual(0);
+    }
+
+    await control.waitForNextUpdate().updateCount(1);
+
+    {
+        const value = prxBatchAsync();
+        expect(value).toEqual(1);
+    }
+
+    await control.waitForNextUpdate().updateCount(2);
+
+    {
+        const value = prxBatchAsync();
+        expect(value).toEqual(3);
+    }
+});
+```
+
+### Custom Waiters
+
+It's also possible to write a custom waiter with the [addWaiter](docs/api/classes/updatewaiter.md#addWaiter) function.
+
+```javascript
+const wait = (ms = 10 = new Promise((resolve) => setTimeout(resolve, ms)));
+
+it("will use the custom waiter function", async () => {
+    {
+        const value = prxBatchAsync();
+        expect(value).toEqual(0);
+    }
+
+    //Unlike debounce just waits for a straight 10ms and resolves, won't wait for the first update event
+    await control.waitForNextUpdate().addWaiter(() => wait());
+
+    {
+        const value = prxBatchAsync();
+        expect(value).toEqual(3);
+    }
+});
+```
+
+Custom waiter is passed in a [rxjs Observable](https://rxjs.dev/guide/observable) with an [UpdateEvents](docs/api/README.md#updateevent).
+If you're familiar with `rxjs` `addWaiter` can take anything that `rxjs` considers to be [ObservableInput](https://rxjs.dev/api/index/type-alias/ObservableInput).
+For the most part a returning a `Promise` is probably what you want as internally it'll wait for the first event from a waiting function.
+
+### Using Fake Timers
+
+`test-react-hooks` is tested using `jest` so documented code might differ for your framework of choice.
+
+```javascript
+const wait = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function useWaits() {
+    const [value, setValue] = useState(0);
+
+    wait(1).then(() => setValue(1));
+    wait(10).then(() => setValue(10));
+    wait(100).then(() => setValue(100));
+
+    return value;
+}
+
+beforeEach(() => {
+    jest.useFakeTimers("modern");
+});
+
+afterEach(() => {
+    jest.useRealTimers();
+});
+
+const [prxWaits, control] = createTestProxy(useWaits);
+
+it("can use proxy timer in waiter fn", async () => {
+    {
+        const value = prxWaits();
+        expect(value).toBe(0);
+    }
+
+    await control
+        .waitForNextUpdate()
+        //Don't forget to add async to turn this into a promise
+        .addWaiter(async () => jest.advanceTimersByTime(2));
+
+    {
+        const value = prxWaits();
+        expect(value).toBe(1);
+    }
+
+    await control
+        .waitForNextUpdate()
+        .addWaiter(async () => jest.advanceTimersByTime(10));
+
+    {
+        const value = prxWaits();
+        expect(value).toBe(10);
+    }
+
+    await control
+        .waitForNextUpdate()
+        .addWaiter(async () => jest.advanceTimersByTime(90));
+
+    {
+        const value = prxWaits();
+        expect(value).toBe(100);
+    }
+});
+```
+
+# Technical Bits
+
+## What happened to the `act` calls?
+
+If you're familiar with [react-test-renderer](https://reactjs.org/docs/test-renderer.html#testrendereract) you'll note that updates need to be wrapped in `act`.
+Where are the calls to `act` in `test-react-hooks`?
+
+It's where the `proxy` part of `createTestProxy` comes in.
+The hook passed in and any results returned will be proxied using [Standard library Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy).
+`act` is then called for any proxied function calls. Using the counter example used in the quick start but with annotations.
+
+```javascript
+import { createTestProxy } from "test-react-hooks";
+import { useState } from "react";
+
+const useCounter = (initial = 0, inc = 1) => {
+    const [count, setCount] = useState(initial);
+    const inc = () => setCount(count + inc);
+    return {
+        count,
+        inc,
+    };
+};
+
+const [prxCounter] = createTestProxy(useCounter);
+
+it("will increment by one", () => {
+    {
+        // Renders the hook inside of a component using 'react-test-renderer'
+        // let root;
+        // TestRenderer.act(() => root = TestRenderer.create(<CallbackComponent />));
+        const { count, inc } = prxCounter();
+        expect(count).toBe(0);
+        // Function calls are wrapped TestRenderer.act(() => inc());
+        inc();
+    }
+
+    {
+        // TestRenderer.act(() => root.update(<CallbackComponent />);
+        const { count } = prxCounter();
+        expect(count).toBe(1);
+    }
+});
+```
+
+There are some caveats to this that only function calls are wrapped in act.
+Namely setters are not wrapped in act so you'll have to wrap anything other than function calls.
+With that being said most hooks don't bother with setters but if this is a an annoyance for you open a feature request.

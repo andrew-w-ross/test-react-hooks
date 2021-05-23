@@ -19,6 +19,7 @@ test-react-hooks - v*
 - [Suspended](README.md#suspended)
 - [TestHook](README.md#testhook)
 - [TestProxyControl](README.md#testproxycontrol)
+- [UpdateEvent](README.md#updateevent)
 - [WrapperComponent](README.md#wrappercomponent)
 
 ### Variables
@@ -37,8 +38,6 @@ test-react-hooks - v*
 ### CreateTestProxyOptions
 
 Ƭ **CreateTestProxyOptions**: *Partial*<Omit<[*DefaultCreateTestProxyOptions*](README.md#defaultcreatetestproxyoptions), ``"waiterDefault"``\>\>
-
-Defined in: [src/createTestProxy.tsx:97](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L97)
 
 ___
 
@@ -59,8 +58,6 @@ Options for [createTestProxy](README.md#createtestproxy)
 | `waiterDefault` | (`waiter`: [*UpdateWaiter*](classes/updatewaiter.md)) => *any* | If the updateWaiter has no waiters this function will default it. |
 | `wrapper` | [*WrapperComponent*](README.md#wrappercomponent) | Wrapper component for the hook callback, make sure children is rendered |
 
-Defined in: [src/createTestProxy.tsx:55](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L55)
-
 ___
 
 ### Suspended
@@ -69,13 +66,13 @@ ___
 
 Type alias for the [SUSPENDED](README.md#suspended) symbol
 
-Defined in: [src/models.ts:11](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L11)
-
 ___
 
 ### TestHook
 
 Ƭ **TestHook**: (...`args`: *any*[]) => *any*
+
+Type definition for a hook
 
 #### Type declaration
 
@@ -89,15 +86,21 @@ ___
 
 **Returns:** *any*
 
-Defined in: [src/createTestProxy.tsx:50](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L50)
-
 ___
 
 ### TestProxyControl
 
 Ƭ **TestProxyControl**: *ReturnType*<*typeof* [*createTestProxy*](README.md#createtestproxy)\>[``1``]
 
-Defined in: [src/createTestProxy.tsx:243](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L243)
+___
+
+### UpdateEvent
+
+Ƭ **UpdateEvent**: { `async`: *boolean* ; `error?`: *undefined*  } \| { `async?`: *undefined* ; `error`: Error  }
+
+Update events while rendering
+ If async is true then the update is happening in response to something other than a direct call to the hook.
+ If error is defined then something went wrong.
 
 ___
 
@@ -107,15 +110,11 @@ ___
 
 Wrapper component to take in and render the children
 
-Defined in: [src/createTestProxy.tsx:46](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L46)
-
 ## Variables
 
 ### DEFAULT\_OPTIONS
 
 • `Const` **DEFAULT\_OPTIONS**: [*DefaultCreateTestProxyOptions*](README.md#defaultcreatetestproxyoptions)
-
-Defined in: [src/createTestProxy.tsx:88](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L88)
 
 ___
 
@@ -124,8 +123,6 @@ ___
 • `Const` **SUSPENDED**: *typeof* [*SUSPENDED*](README.md#suspended)
 
 Symbol that is returned if the call to that function is suspended.
-
-Defined in: [src/models.ts:6](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L6)
 
 ## Functions
 
@@ -149,8 +146,6 @@ reduces the amount of re-renders done.
 
 **Returns:** *Promise*<undefined\>
 
-Defined in: node_modules/@types/react-test-renderer/index.d.ts:75
-
 ▸ **act**(`callback`: () => VoidOrUndefinedOnly): DebugPromiseLike
 
 Wrap any code rendering and triggering updates to your components into `act()` calls.
@@ -169,8 +164,6 @@ reduces the amount of re-renders done.
 
 **Returns:** DebugPromiseLike
 
-Defined in: node_modules/@types/react-test-renderer/index.d.ts:87
-
 ___
 
 ### cleanUp
@@ -178,8 +171,6 @@ ___
 ▸ **cleanUp**(): *void*
 
 **Returns:** *void*
-
-Defined in: [src/createTestProxy.tsx:20](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L20)
 
 ___
 
@@ -209,5 +200,3 @@ Proxy hook will rerender when called and wrap calls in act when appropriate
 **Returns:** readonly [THook, { `unmount`: () => *void* ; `waitForNextUpdate`: () => [*UpdateWaiter*](classes/updatewaiter.md) ; `wrapper`:   }]
 
 tuple where the first result is the proxied hook and the second is the control object.
-
-Defined in: [src/createTestProxy.tsx:112](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/createTestProxy.tsx#L112)

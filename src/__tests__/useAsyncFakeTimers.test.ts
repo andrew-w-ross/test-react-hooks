@@ -1,21 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createTestProxy } from "../createTestProxy";
 import { wait } from "../utils";
 
 function useWaits() {
     const [value, setValue] = useState(0);
 
-    useEffect(() => {
-        wait(1).then(() => setValue(1));
-        wait(10).then(() => setValue(10));
-        wait(100).then(() => setValue(100));
-    }, []);
+    wait(1).then(() => setValue(1));
+    wait(10).then(() => setValue(10));
+    wait(100).then(() => setValue(100));
 
     return value;
 }
-
-//If we failed to wrap async changes in act then it complains, just watching to make sure that didn't happen.
-const errorSpy = jest.spyOn(console, "error");
 
 beforeEach(() => {
     jest.useFakeTimers("modern");
@@ -25,9 +20,8 @@ afterEach(() => {
     jest.useRealTimers();
 });
 
+const [prxWaits, control] = createTestProxy(useWaits);
 it("can use proxy timer in waiter fn", async () => {
-    const [prxWaits, control] = createTestProxy(useWaits);
-
     {
         const value = prxWaits();
         expect(value).toBe(0);
@@ -50,13 +44,9 @@ it("can use proxy timer in waiter fn", async () => {
         const value = prxWaits();
         expect(value).toBe(10);
     }
-
-    expect(errorSpy).not.toHaveBeenCalled();
 });
 
 it("running all pending timers will skip to the end", async () => {
-    const [prxWaits, control] = createTestProxy(useWaits);
-
     {
         const value = prxWaits();
         expect(value).toBe(0);
@@ -70,5 +60,4 @@ it("running all pending timers will skip to the end", async () => {
         const value = prxWaits();
         expect(value).toBe(100);
     }
-    expect(errorSpy).not.toHaveBeenCalled();
 });

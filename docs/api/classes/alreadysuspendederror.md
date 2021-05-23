@@ -46,8 +46,6 @@ Probably means that you'll need to wait for the suspension to complete.
 
 Overrides: Error.constructor
 
-Defined in: [src/models.ts:17](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L17)
-
 ## Properties
 
 ### message
@@ -55,8 +53,6 @@ Defined in: [src/models.ts:17](https://github.com/andrew-w-ross/test-react-hooks
 • **message**: *string*
 
 Inherited from: Error.message
-
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
@@ -66,8 +62,6 @@ ___
 
 Inherited from: Error.name
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
-
 ___
 
 ### stack
@@ -75,8 +69,6 @@ ___
 • `Optional` **stack**: *string*
 
 Inherited from: Error.stack
-
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:975
 
 ___
 
@@ -103,8 +95,6 @@ Optional override for formatting stack traces
 
 Inherited from: Error.prepareStackTrace
 
-Defined in: node_modules/@types/node/globals.d.ts:11
-
 ___
 
 ### stackTraceLimit
@@ -112,8 +102,6 @@ ___
 ▪ `Static` **stackTraceLimit**: *number*
 
 Inherited from: Error.stackTraceLimit
-
-Defined in: node_modules/@types/node/globals.d.ts:13
 
 ## Methods
 
@@ -134,8 +122,6 @@ Create .stack property on a target object
 
 Inherited from: Error.captureStackTrace
 
-Defined in: node_modules/@types/node/globals.d.ts:4
-
 ___
 
 ### getErrorMessage
@@ -149,5 +135,3 @@ ___
 | `applyArgs` | *any*[] | Arguments sent to {@see Reflect.apply} |
 
 **Returns:** *string*
-
-Defined in: [src/models.ts:26](https://github.com/andrew-w-ross/test-react-hooks/blob/d41c3e5/src/models.ts#L26)
