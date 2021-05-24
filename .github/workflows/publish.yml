@@ -2,9 +2,9 @@ name: Publish
 on:
   release:
     types: [created]      
+env:
+  VERSION: github.event.release.tag_name
 jobs:
-  env:
-    VERSION: github.event.release.tag_name
   build:
     runs-on: ubuntu-latest
     steps:
