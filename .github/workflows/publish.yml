@@ -30,14 +30,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - name: install
-        run: yarn
+      # - name: install
+      #   run: yarn
       
-      - name: build
-        run: yarn build     
+      # - name: build
+      #   run: yarn build     
 
-      - name: test
-        run: yarn test      
+      # - name: test
+      #   run: yarn test      
 
       - name: publish                
         run: |
@@ -46,17 +46,11 @@ jobs:
           yarn version -i $VERSION
           # yarn npm publish --access public          
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: get remote branch name
-        id: branch
-        run: |
-          BRANCH=$(echo $GITHUB_REF | cut --delimiter / --fields '3-')
-          echo "::set-output name=name::$BRANCH"
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}      
 
       - name: push package.json
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           file_pattern: package.json
           commit_message: Published ${{env.VERSION}}
-          branch: ${{ steps.branch.outputs.name }}          
+          branch: chore/publish
