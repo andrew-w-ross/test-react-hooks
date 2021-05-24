@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { createTestProxy } from "../createTestProxy";
+import { createTestProxy, cleanUp } from "../createTestProxy";
 import { CheckWrapperError } from "../models";
 
 const TestContext = createContext(0);
@@ -46,4 +46,36 @@ it("will warn if the wrapper does not pass on the children if strict is disabled
     expect(warnSpy).toHaveBeenCalledWith(
         expect.stringMatching(/did not render it's children/),
     );
+});
+
+it("will reset to the original wrapper on cleanUp", () => {
+    const [prxContext, control] = createTestProxy(useContext, {
+        wrapper: ({ children }) => (
+            <TestContext.Provider value={1}>{children}</TestContext.Provider>
+        ),
+    });
+
+    //Initial value is 1
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(1);
+    }
+
+    //Update the wrapper so the value is 2
+    control.wrapper = ({ children }) => (
+        <TestContext.Provider value={2}>{children}</TestContext.Provider>
+    );
+
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(2);
+    }
+
+    //Should reset to the original wrapper
+    cleanUp();
+
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(1);
+    }
 });

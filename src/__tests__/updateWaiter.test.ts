@@ -76,7 +76,7 @@ it("will throw if an error is piped through", async () => {
     await expect(waitPromise).rejects.toThrowError(error);
 });
 
-it("will throw if an error occures during act", async () => {
+it("will throw if an error occurs during act", async () => {
     const { createWaiter } = createUpdateStream();
 
     const updateWait = createWaiter().act(() => {
@@ -86,7 +86,7 @@ it("will throw if an error occures during act", async () => {
     await expect(updateWait).rejects.toThrowError("boom");
 });
 
-it("will warn if act function is overriden", () => {
+it("will warn if act function is overridden", () => {
     const errorSpy = jest.spyOn(console, "warn");
     const { createWaiter } = createUpdateStream();
 
@@ -100,27 +100,23 @@ it("will warn if act function is overriden", () => {
 it("will wait for one of the promises to resolve in race", async () => {
     const { createWaiter, updateSubject } = createUpdateStream();
 
-    createWaiter()
-        .iterationMode("race")
-        .updateCount(1)
-        .updateCount(2)
-        .then(resolveSpy);
+    createWaiter().waitRace().updateCount(1).updateCount(2).then(resolveSpy);
     //force execution
-    await wait();
-
     await wait();
     expect(resolveSpy).not.toHaveBeenCalled();
 
     updateSubject.next({ async: true });
     await wait();
+
     expect(resolveSpy).toHaveBeenCalled();
 });
 
-it("will wait for all of the promises to resolve in race", async () => {
+it("will wait for all of the promises to resolve in all", async () => {
     const { createWaiter, updateSubject } = createUpdateStream();
 
-    createWaiter().iterationMode("all").updateCount(2).then(resolveSpy);
+    createWaiter().waitAll().updateCount(2).then(resolveSpy);
     await wait();
+    expect(resolveSpy).not.toHaveBeenCalled();
 
     updateSubject.next({ async: true });
     await wait();
@@ -135,7 +131,7 @@ it("will throw if modified after wait", async () => {
     const { createWaiter } = createUpdateStream();
 
     const waiter = createWaiter();
-    await Promise.resolve();
+    await wait();
 
     expect(() => waiter.debounce()).toThrowError();
 });

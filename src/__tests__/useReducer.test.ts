@@ -50,10 +50,8 @@ it("will handle multiple dispatches", () => {
 
 it("will catch the error", () => {
     const [, dispatch] = prxReducer(reducer, initialState);
-    const callback = () => {
-        dispatch({ type: "throw" });
-    };
-    expect(callback).toThrowError("Boom");
+
+    expect(() => dispatch({ type: "throw" })).toThrowError("Boom");
 });
 
 it("will handle lazy initialization", () => {

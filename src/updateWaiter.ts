@@ -9,6 +9,9 @@ import {
     Subject,
 } from "rxjs";
 import { bufferCount, debounceTime, filter, map, take } from "rxjs/operators";
+import { DEFAULT_OPTIONS } from "./createTestProxy";
+import type { UpdateEvent } from "./models";
+import { AlreadyExecutedError } from "./models";
 import { promiseWithExternalExecutor } from "./utils";
 
 /**
@@ -16,25 +19,20 @@ import { promiseWithExternalExecutor } from "./utils";
  */
 export type WaitMode = "race" | "all";
 
-export type UpdateEvent =
-    | { async: boolean; error?: undefined }
-    | { error: Error; async?: undefined };
-
-export class AlreadyExecutedError extends Error {
-    constructor() {
-        super("Already executed");
-    }
-}
-
 /**
  * UpdateWaiter is a fluent api that will resolve when it's conditions are met.
  */
 export class UpdateWaiter extends Promise<void> {
+    /** @internal */
     public executed = false;
+    /** @internal */
     public waiters: ObservableInput<any>[] = [];
+    /** @internal */
     public waitMode: WaitMode = "all";
+    /** @internal */
     public _actFn?: () => any | Promise<any>;
 
+    /** @internal */
     constructor(
         executor: (
             resolve: (value: void | PromiseLike<void>) => void,
@@ -48,10 +46,8 @@ export class UpdateWaiter extends Promise<void> {
     /**
      * @param waitFn function that takes in an {Observable<UpdateEvent>} and returns an {Observable<any>} or a {Promise}
      * @example
-     * ```typescript
      * //Wait for 10ms
      * createWaiter().addWaiter((updateObserver) => new Promise((resolve) => setTimeout(resolve, 10)));
-     * ```
      */
     addWaiter(
         waitFn: (
@@ -105,11 +101,18 @@ export class UpdateWaiter extends Promise<void> {
         );
 
     /**
-     * If there is more than one condition how should they be handled
-     * @param mode - is either the string 'race' or 'all' if 'race' will wait for one to resolve if 'all' waits for all to resolve.
+     * Waits for all of the waiters to resolve before resolving
      */
-    iterationMode(mode: WaitMode) {
-        this.waitMode = mode;
+    waitAll() {
+        this.waitMode = "all";
+        return this;
+    }
+
+    /**
+     * Waits for one of the waiters to resolve before resolving
+     */
+    waitRace() {
+        this.waitMode = "race";
         return this;
     }
 }
@@ -169,7 +172,7 @@ export function createUpdateStream() {
             await Promise.resolve();
 
             if (waiter.waiters.length === 0) {
-                waiter.debounce();
+                DEFAULT_OPTIONS.waiterDefault(waiter);
             }
             waiter.executed = true;
 
