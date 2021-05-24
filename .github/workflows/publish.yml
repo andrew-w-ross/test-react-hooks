@@ -30,14 +30,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      # - name: install
-      #   run: yarn
+      - name: install
+        run: yarn
       
-      # - name: build
-      #   run: yarn build     
+      - name: build
+        run: yarn build     
 
-      # - name: test
-      #   run: yarn test      
+      - name: test
+        run: yarn test      
 
       - name: publish                
         run: |
@@ -53,4 +53,4 @@ jobs:
         with:
           file_pattern: package.json
           commit_message: Published ${{env.VERSION}}
-          branch: chore/publish
+          branch: master
