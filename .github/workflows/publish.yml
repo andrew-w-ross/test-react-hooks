@@ -3,6 +3,8 @@ on:
   release:
     types: [created]      
 jobs:
+  env:
+    VERSION: github.event.release.tag_name
   build:
     runs-on: ubuntu-latest
     steps:
@@ -40,7 +42,16 @@ jobs:
       - name: created event payload
         run: echo ${{toJSON(github.event)}}
 
-      # - name: publish
-      #   run: yarn npm publish --access public --tag 
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: publish                
+        run: |
+          VERSION="${VERSION//v}"
+          yarn version -i $VERSION
+          # yarn npm publish --access public          
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: push package.json
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          file_pattern: package.json
+          commit_message: Published ${{env.VERSION}}
