@@ -1,3 +1,4 @@
 export * from "./createTestProxy";
-export { cleanUp } from "./utils";
-export { act } from "react-dom/test-utils";
+export { act } from "react-test-renderer";
+export * from "./models";
+export { UpdateWaiter } from "./updateWaiter";

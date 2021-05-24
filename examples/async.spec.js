@@ -1,39 +1,39 @@
 import { useEffect, useState } from "react";
-import { createTestProxy, cleanUp } from "test-react-hooks";
-
-afterEach(() => cleanUp());
+import { createTestProxy } from "test-react-hooks";
 
 function useAsync(fn) {
-  const [value, setValue] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    setIsLoading(true);
-    fn().then(v => {
-      setValue(v);
-      setIsLoading(false);
-    });
-  }, [fn]);
-  return {
-    value,
-    isLoading
-  };
+    const [value, setValue] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    useEffect(() => {
+        setIsLoading(true);
+        fn().then((v) => {
+            setValue(v);
+            setIsLoading(false);
+        });
+    }, [fn]);
+    return {
+        value,
+        isLoading,
+    };
 }
 
 const [prxAsync, control] = createTestProxy(useAsync);
-const prxySpy = jest.fn(() => Promise.resolve("foo"));
 
 it("will wait for update", async () => {
-  {
-    const { value, isLoading } = prxAsync(prxySpy);
-    expect(value).toBeNull();
-    expect(isLoading).toBe(true);
-  }
+    const prxySpy = jest.fn(() => Promise.resolve("foo"));
 
-  await control.waitForNextUpdate();
+    {
+        const { value, isLoading } = prxAsync(prxySpy);
+        expect(value).toBeNull();
+        expect(isLoading).toBe(true);
+    }
 
-  {
-    const { value, isLoading } = prxAsync(prxySpy);
-    expect(value).toBe("foo");
-    expect(isLoading).toBe(false);
-  }
+    //Wait for next update will wait for the next time the component updates
+    await control.waitForNextUpdate();
+
+    {
+        const { value, isLoading } = prxAsync(prxySpy);
+        expect(value).toBe("foo");
+        expect(isLoading).toBe(false);
+    }
 });

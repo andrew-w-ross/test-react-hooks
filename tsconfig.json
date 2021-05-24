@@ -1,17 +1,30 @@
 {
-  "compilerOptions": {
-    "target": "es2018",
-    "noEmit": true,
-    "outDir": "dist",
-    "declaration": true,
-    "strict": true,
-    "jsx": "react",
-    "module": "commonjs",
-    "sourceMap": true,
-    "lib": ["esnext", "dom"],
-    "types": ["jest", "node"],
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
-  },
-  "include": ["src/**/*", "setup.ts"]
+    "compilerOptions": {
+        "rootDir": "./src",
+        "target": "es2018",
+        "outDir": "dist",
+        "declaration": true,
+        "strict": true,
+        "jsx": "react-jsxdev",
+        "module": "commonjs",
+        "sourceMap": true,
+        "lib": ["esnext", "dom"],
+        "types": ["jest", "node"],
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "Node",
+        "noUnusedLocals": true,
+        "skipLibCheck": true
+    },
+    "include": ["src"],
+    "typedocOptions": {
+        "entryPoints": "./src/index.ts",
+        "excludePrivate": true,
+        "excludeInternal": true,
+        "out": "docs/api",
+        "name": "test-react-hooks",
+        "includeVersion": true,
+        "readme": "none",
+        "disableSources": true
+    }
 }

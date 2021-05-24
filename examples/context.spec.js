@@ -1,32 +1,32 @@
 import React, { createContext, useContext } from "react";
-import { createTestProxy, cleanUp } from "test-react-hooks";
-
-afterEach(() => cleanUp());
+import { createTestProxy } from "test-react-hooks";
 
 const TestContext = createContext(0);
 
-const Wrapper = ({ val, children }) => (
-  <TestContext.Provider value={val}>{children}</TestContext.Provider>
-);
-
 it("will get the default value", () => {
-  const [prxContext] = createTestProxy(useContext);
-  const res = prxContext(TestContext);
-  expect(res).toBe(0);
+    const [prxContext] = createTestProxy(useContext);
+    const res = prxContext(TestContext);
+    expect(res).toBe(0);
 });
 
+//If you need a wrapping component to the hook use the wrapper option
+//Or update the wrapper prop on the control object
+//Don't forget to pass through the children or the proxyHook will fail
 it("will get the value from the above context", () => {
-  const [prxContext, control] = createTestProxy(useContext, {
-    wrapper: Wrapper,
-    props: { val: 2 }
-  });
-  {
-    const res = prxContext(TestContext);
-    expect(res).toBe(2);
-  }
-  {
-    control.props = { val: 3 };
-    const res = prxContext(TestContext);
-    expect(res).toBe(3);
-  }
+    const [prxContext, control] = createTestProxy(useContext, {
+        wrapper: ({ children }) => (
+            <TestContext.Provider value={2}>{children}</TestContext.Provider>
+        ),
+    });
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(2);
+    }
+    {
+        control.wrapper = ({ children }) => (
+            <TestContext.Provider value={3}>{children}</TestContext.Provider>
+        );
+        const res = prxContext(TestContext);
+        expect(res).toBe(3);
+    }
 });

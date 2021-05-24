@@ -1,30 +1,81 @@
-import React, { createContext, useContext, FC } from "react";
-import { createTestProxy } from "../createTestProxy";
+import { createContext, useContext } from "react";
+import { createTestProxy, cleanUp } from "../createTestProxy";
+import { CheckWrapperError } from "../models";
 
 const TestContext = createContext(0);
 
-const Wrapper: FC<{ val: number }> = ({ val, children }) => (
-  <TestContext.Provider value={val}>{children}</TestContext.Provider>
-);
-
 it("will get the default value", () => {
-  const [prxContext] = createTestProxy(useContext);
-  const res = prxContext(TestContext);
-  expect(res).toBe(0);
+    const [prxContext] = createTestProxy(useContext);
+    const res = prxContext(TestContext);
+    expect(res).toBe(0);
 });
 
 it("will get the value from the above context", () => {
-  const [prxContext, control] = createTestProxy(useContext, {
-    wrapper: Wrapper,
-    props: { val: 2 },
-  });
-  {
-    const res = prxContext(TestContext);
-    expect(res).toBe(2);
-  }
-  {
-    control.props = { val: 3 };
-    const res = prxContext(TestContext);
-    expect(res).toBe(3);
-  }
+    const [prxContext, control] = createTestProxy(useContext, {
+        wrapper: ({ children }) => (
+            <TestContext.Provider value={2}>{children}</TestContext.Provider>
+        ),
+    });
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(2);
+    }
+    {
+        control.wrapper = ({ children }) => (
+            <TestContext.Provider value={3}>{children}</TestContext.Provider>
+        );
+        const res = prxContext(TestContext);
+        expect(res).toBe(3);
+    }
+});
+
+it("will throw the wrapper does not pass on the children in strict mode", () => {
+    const [prxContext] = createTestProxy(useContext, {
+        wrapper: () => <h1>Dont pass children</h1>,
+    });
+    expect(() => prxContext(TestContext)).toThrowError(CheckWrapperError);
+});
+
+it("will warn if the wrapper does not pass on the children if strict is disabled", () => {
+    const [prxContext] = createTestProxy(useContext, {
+        wrapper: () => <h1>Dont pass children</h1>,
+        strict: false,
+    });
+    const warnSpy = jest.spyOn(console, "warn");
+    prxContext(TestContext);
+    expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/did not render it's children/),
+    );
+});
+
+it("will reset to the original wrapper on cleanUp", () => {
+    const [prxContext, control] = createTestProxy(useContext, {
+        wrapper: ({ children }) => (
+            <TestContext.Provider value={1}>{children}</TestContext.Provider>
+        ),
+    });
+
+    //Initial value is 1
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(1);
+    }
+
+    //Update the wrapper so the value is 2
+    control.wrapper = ({ children }) => (
+        <TestContext.Provider value={2}>{children}</TestContext.Provider>
+    );
+
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(2);
+    }
+
+    //Should reset to the original wrapper
+    cleanUp();
+
+    {
+        const res = prxContext(TestContext);
+        expect(res).toBe(1);
+    }
 });

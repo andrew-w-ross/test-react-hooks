@@ -1,140 +1,246 @@
-import React, { FC } from "react";
-import ReactDOM from "react-dom";
-import { act } from "react-dom/test-utils";
-import { WrapFn, wrapProxy } from "./proxy";
-import "./reactWrap";
-import { getContainer, unmount } from "./utils";
+import type { ComponentType, ReactNode } from "react";
+import type { TestRendererOptions } from "react-test-renderer";
+import { act } from "react-test-renderer";
+import type { Suspended } from "./models";
+import {
+    AlreadySuspendedError,
+    CheckWrapperError,
+    SUSPENDED,
+    UnknownError,
+} from "./models";
+import type { WrapApplyFn } from "./proxy";
+import { wrapProxy } from "./proxy";
+import { RenderState } from "./RenderState";
+import type { UpdateWaiter } from "./updateWaiter";
+import { createUpdateStream } from "./updateWaiter";
+import { isPromiseLike, returnAct } from "./utils";
 
-type TestHookProps = {
-  callback: Function;
-  children: Function;
+const cleanUpFns: Function[] = [];
+
+export function cleanUp() {
+    cleanUpFns.splice(0, cleanUpFns.length).forEach((func) => func());
+}
+
+if (!process.env.TEST_REACT_HOOKS_NO_CLEANUP) {
+    if (typeof globalThis?.afterEach === "function") {
+        globalThis?.afterEach?.(cleanUp);
+    } else {
+        console.warn(
+            "No afterEach function found on the global scope, please call cleanUp function between tests.",
+        );
+    }
+}
+
+type CallbackHookProps = {
+    callback: Function;
 };
 
-function TestHook({ callback, children }: TestHookProps) {
-  callback();
-  children();
-  return null;
-}
-
-const DefaultWrapper: FC = ({ children }) => <>{children}</>;
+const CallbackComponent = ({ callback }: CallbackHookProps) => {
+    callback();
+    return null;
+};
 
 /**
- * Options for createTestProxy
- *
- * @export
- * @interface UseProxyOptions
- * @template TProps
+ * Wrapper component to take in and render the children
  */
-export interface UseProxyOptions<TProps> {
-  /**
-   * Component to wrap the test component in
-   *
-   * @type {React.ComponentType<TProps>}
-   */
-  wrapper?: React.ComponentType<TProps>;
+export type WrapperComponent = ComponentType<{ children: ReactNode }>;
 
-  /**
-   * Initial  props to render the wrapper component with
-   */
-  props?: TProps;
-}
+const DefaultWrapper: WrapperComponent = ({ children }) => <>{children}</>;
 
 /**
- * Control object for the proxy hook
- *
- * @export
- * @interface HookControl
- * @template TProps
+ * Type definition for a hook
  */
-export interface HookControl<TProps> {
-  /**
-   * Unmounts the test component
-   * useful when testing the cleanup of useEffect or useLayoutEffect
-   *
-   * @memberof HookControl
-   */
-  unmount: () => void;
-  /**
-   * Updates the props to be used in the wrapper component
-   * Does not cause a rerender, call the proxy hook to force that
-   */
-  props: TProps;
-  /**
-   * The container of the test component
-   */
-  readonly container: HTMLElement;
-  /**
-   * A promise that will resolve on update
-   * Use when waiting for async effects to run
-   */
-  waitForNextUpdate: () => Promise<void>;
-}
+export type TestHook = (...args: any[]) => any;
 
 /**
+ * Options for {@link createTestProxy}
+ */
+export type DefaultCreateTestProxyOptions = {
+    /**
+     * Options that are forwarded to {@link https://reactjs.org/docs/test-renderer.html react-test-renderer }
+     */
+    testRendererOptions?: TestRendererOptions;
+
+    /**
+     * Wrapper component for the hook callback, make sure children is rendered
+     */
+    wrapper: WrapperComponent;
+
+    /**
+     * Should the proxy throw an error or print a warning, defaults to true.
+     */
+    strict: boolean;
+
+    /**
+     * When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed.
+     * If this is set to false {@link waitForNextUpdate} will not reject on error and instead the next invocation will throw.
+     */
+    autoInvokeSuspense: boolean;
+
+    /**
+     * The act function that react needs, use this if you need to use multiple react {@link https://reactjs.org/docs/testing-recipes.html#multiple-renderers multiple-renderers}
+     */
+    actFn: typeof act;
+
+    /**
+     * If the updateWaiter has no waiters this function will default it.
+     */
+    waiterDefault: (waiter: UpdateWaiter) => any;
+};
+
+export const DEFAULT_OPTIONS: DefaultCreateTestProxyOptions = {
+    actFn: act,
+    autoInvokeSuspense: true,
+    strict: true,
+    testRendererOptions: undefined,
+    wrapper: DefaultWrapper,
+    waiterDefault: (waiter) => waiter.debounce(),
+};
+
+export type CreateTestProxyOptions = Partial<
+    Omit<DefaultCreateTestProxyOptions, "waiterDefault">
+>;
+
+/**
+ * Main function for `test-react-hooks`
  * Creates a proxy hook and a control object for that hook
- * Proxy hook will rerender when called and wrap
- * Calls in act when appropriate
+ * Proxy hook will rerender when called and wrap calls in act when appropriate
  *
  * @export
- * @template THook
- * @template TProps
- * @param {THook} hook
- * @param {UseProxyOptions<TProps>} [options={}]
- * @returns {[THook, HookControl<TProps>]}
+ * @template THook type of the hook to proxy, should be inferred from hook argument
+ * @param {THook} hook to proxy
+ * @param {DefaultCreateTestProxyOptions} [options={}]
+ * @returns {[THook, HookControl<TProps>]} tuple where the first result is the proxied hook and the second is the control object.
  */
-export function createTestProxy<THook, TProps = any>(
-  hook: THook,
-  options: UseProxyOptions<TProps> = {}
-): [THook, HookControl<TProps>] {
-  const { wrapper: Wrapper = DefaultWrapper } = options;
-  let { props } = options;
+export function createTestProxy<THook extends TestHook>(
+    hook: THook,
+    //If you destructor the args the naming gets odd in documentation
+    options?: CreateTestProxyOptions,
+) {
+    const {
+        testRendererOptions,
+        strict,
+        autoInvokeSuspense,
+        actFn,
+        wrapper,
+    } = {
+        ...DEFAULT_OPTIONS,
+        ...(options ?? {}),
+    };
 
-  const resolvers: Function[] = [];
-  function runResolvers() {
-    resolvers.splice(0, resolvers.length).forEach(resolve => {
-      resolve();
-    });
-  }
+    let Wrapper = wrapper;
 
-  function render(applyFn: () => void) {
-    ReactDOM.render(
-      <Wrapper {...(props as any)}>
-        <TestHook callback={applyFn}>{runResolvers}</TestHook>
-      </Wrapper>,
-      getContainer()
-    );
-  }
+    const { updateSubject, createWaiter, hoistError } = createUpdateStream();
+    const renderState = new RenderState(updateSubject, testRendererOptions);
 
-  const wrapFn: WrapFn = (target, applyFn) => {
-    act(() => {
-      if (target === hook) {
-        render(applyFn);
-      } else {
-        applyFn();
-      }
-    });
-  };
+    const cleanup = () => {
+        renderState.unmount();
+        //Reset to the original wrapper
+        Wrapper = wrapper;
+    };
 
-  const control: HookControl<TProps> = {
-    unmount,
-    set props(newValue: TProps) {
-      props = newValue;
-    },
-    get container() {
-      return getContainer();
-    },
-    waitForNextUpdate: () =>
-      new Promise<void>(resolve => resolvers.push(resolve))
-  };
+    const handleProxyErrors = (error: Error) => {
+        if (strict) throw error;
+        console.warn(`${error.name}: ${error.message}`);
+    };
 
-  return [wrapProxy(hook, wrapFn), control];
+    /**
+     * Function that will ensure a function and all it's returned members are wrapped in act
+     */
+    const wrapApplyAct: WrapApplyFn = (...args) => {
+        return hoistError(() => {
+            try {
+                const result = returnAct(() => Reflect.apply(...args), actFn);
+                updateSubject.next({ async: !renderState.isRendering });
+                return result;
+            } catch (callError) {
+                if (isPromiseLike(callError)) {
+                    //If we are rendering then throw back so react can handle
+                    if (renderState.isRendering) throw callError;
+
+                    callError.then(() => {
+                        //This could be done better inside of renderState
+                        renderState.isSuspended = false;
+                        try {
+                            if (autoInvokeSuspense) {
+                                //This probably doesn't need to wrapped in act
+                                returnAct(() => Reflect.apply(...args), actFn);
+                            }
+
+                            updateSubject.next({ async: true });
+                        } catch (error) {
+                            updateSubject.next({ error });
+                        }
+                    });
+                } else {
+                    updateSubject.next({ error: callError });
+                }
+            }
+            if (renderState.isSuspended) {
+                handleProxyErrors(new AlreadySuspendedError(args));
+            }
+            renderState.isSuspended = true;
+            return SUSPENDED;
+        });
+    };
+
+    const proxiedHook = wrapProxy(hook, wrapApplyAct);
+
+    //@ts-expect-error
+    const renderHook: THook = (...params: Parameters<THook>) => {
+        if (!cleanUpFns.includes(cleanup)) {
+            cleanUpFns.push(cleanup);
+        }
+        let isCalled = false;
+        let result: ReturnType<TestHook> | Suspended = SUSPENDED;
+
+        const callback = () => {
+            isCalled = true;
+            result = proxiedHook(...params);
+        };
+
+        hoistError(() =>
+            renderState.render(
+                <Wrapper>
+                    <CallbackComponent callback={callback} />
+                </Wrapper>,
+            ),
+        );
+
+        if (!isCalled) {
+            if (Wrapper === DefaultWrapper) {
+                //This shouldn't happen, famous last words. Instead throw an error explaining where to raise an issue.
+                throw new UnknownError();
+            } else {
+                handleProxyErrors(new CheckWrapperError(Wrapper));
+            }
+        }
+
+        return result;
+    };
+
+    const control = {
+        /**
+         * Sets the wrapper, passing in null or undefined will use the default wrapper.
+         * Setting this does not force a render.
+         */
+        set wrapper(wrapperComponent: WrapperComponent | null | undefined) {
+            Wrapper = wrapperComponent ?? wrapper;
+        },
+
+        /**
+         * Unmount the current component.
+         */
+        unmount: () => hoistError(() => renderState.unmount()),
+
+        /**
+         * Creates an {@link UpdateWaiter} that by default will wait for the component to stop updating for `2ms`.
+         * @returns UpdateWaiter
+         */
+        waitForNextUpdate: () => createWaiter(),
+    };
+
+    return [renderHook, control] as const;
 }
 
-/**
- * @deprecated use createTestProxy
- */
-export const useTestProxy: typeof createTestProxy = (...args: any[]) => {
-  console.warn("useTestProxy is deperacted, use createTestProxy instead");
-  //@ts-ignore
-  return createTestProxy(...args);
-};
+export type TestProxyControl = ReturnType<typeof createTestProxy>[1];
