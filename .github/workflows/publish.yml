@@ -38,7 +38,7 @@ jobs:
         run: yarn test
 
       - name: created event payload
-        run: echo ${{toJON(github.event)}}
+        run: echo ${{toJSON(github.event)}}
 
       # - name: publish
       #   run: yarn npm publish --access public --tag 
