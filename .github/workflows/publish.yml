@@ -41,6 +41,7 @@ jobs:
 
       - name: publish                
         run: |
+          echo $VERSION
           VERSION="${VERSION//v}"
           yarn version -i $VERSION
           # yarn npm publish --access public          
