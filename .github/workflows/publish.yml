@@ -37,10 +37,7 @@ jobs:
         run: yarn build     
 
       - name: test
-        run: yarn test
-
-      - name: created event payload
-        run: echo ${{toJSON(github.event)}}
+        run: yarn test      
 
       - name: publish                
         run: |
