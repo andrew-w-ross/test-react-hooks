@@ -48,8 +48,15 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: get remote branch name
+        id: branch
+        run: |
+          BRANCH=$(echo $GITHUB_REF | cut --delimiter / --fields '3-')
+          echo "::set-output name=name::$BRANCH"
+
       - name: push package.json
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           file_pattern: package.json
           commit_message: Published ${{env.VERSION}}
+          branch: ${{ steps.branch.outputs.name }}          
