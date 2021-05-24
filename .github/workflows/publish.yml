@@ -31,13 +31,7 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: install
-        run: yarn
-      
-      - name: build
-        run: yarn build     
-
-      - name: test
-        run: yarn test      
+        run: yarn            
 
       - name: publish                
         run: |
