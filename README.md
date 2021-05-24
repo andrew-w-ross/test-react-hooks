@@ -119,9 +119,9 @@ Or click on the below link to a sandbox with the above examples.
 
 ## Api Documentation
 
-Main entry point of the project is [the createTestProxy function.](docs/api/readme.md#createtestproxy)
+Main entry point of the project is [the createTestProxy function.](docs/api/README.md#createtestproxy)
 
-For the rest of the api documentation [click here.](docs/api/readme.md)
+For the rest of the api documentation [click here.](docs/api/README.md)
 
 ## Why use test-react-hooks?
 
@@ -135,8 +135,8 @@ Overall it attempts to get out of your way without any surprises on how to write
 
 # Slower start
 
-The main entry point for `test-react-hooks` is [createTestProxy](docs/api/readme.md#createtestprox).
-It takes in two arguments the first is the hook that you'll want to test and the second is an optional [options argument](docs/api/readme.md#createtestproxyoptions).
+The main entry point for `test-react-hooks` is [createTestProxy](docs/api/README.md#createtestprox).
+It takes in two arguments the first is the hook that you'll want to test and the second is an optional [options argument](docs/api/README.md#createtestproxyoptions).
 
 ```javascript
 import { useState } from "react";
