@@ -44,7 +44,7 @@ jobs:
           echo $VERSION
           VERSION="${VERSION//v}"
           yarn version -i $VERSION
-          # yarn npm publish --access public          
+          yarn npm publish --access public          
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}      
 
