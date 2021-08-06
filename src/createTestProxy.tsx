@@ -21,8 +21,10 @@ export function cleanUp() {
     cleanUpFns.splice(0, cleanUpFns.length).forEach((func) => func());
 }
 
-if (!process.env.TEST_REACT_HOOKS_NO_CLEANUP) {
-    if (typeof globalThis?.afterEach === "function") {
+
+
+if (!globalThis?.process?.env?.TEST_REACT_HOOKS_NO_CLEANUP) {    
+    if (typeof globalThis?.afterEach === "function") {        
         globalThis?.afterEach?.(cleanUp);
     } else {
         console.warn(
@@ -115,7 +117,7 @@ export type CreateTestProxyOptions = Partial<
 export function createTestProxy<THook extends TestHook>(
     hook: THook,
     //If you destructor the args the naming gets odd in documentation
-    options?: CreateTestProxyOptions,
+    options: CreateTestProxyOptions = {},
 ) {
     const {
         testRendererOptions,
@@ -125,7 +127,7 @@ export function createTestProxy<THook extends TestHook>(
         wrapper,
     } = {
         ...DEFAULT_OPTIONS,
-        ...(options ?? {}),
+        ...options,
     };
 
     let Wrapper = wrapper;

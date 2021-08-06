@@ -20,10 +20,10 @@ function useAsync(fn) {
 const [prxAsync, control] = createTestProxy(useAsync);
 
 it("will wait for update", async () => {
-    const prxySpy = jest.fn(() => Promise.resolve("foo"));
+    const prxSpy = jest.fn(() => Promise.resolve("foo"));
 
     {
-        const { value, isLoading } = prxAsync(prxySpy);
+        const { value, isLoading } = prxAsync(prxSpy);
         expect(value).toBeNull();
         expect(isLoading).toBe(true);
     }
@@ -32,7 +32,7 @@ it("will wait for update", async () => {
     await control.waitForNextUpdate();
 
     {
-        const { value, isLoading } = prxAsync(prxySpy);
+        const { value, isLoading } = prxAsync(prxSpy);
         expect(value).toBe("foo");
         expect(isLoading).toBe(false);
     }

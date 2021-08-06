@@ -46,7 +46,7 @@ it("will not return the result of the inner function", async () => {
 });
 
 it("gives an error if not awaited", async () => {
-    const errorSpy = spyOn(console, "error");
+    const errorSpy = jest.spyOn(console, "error");
     const actResult = act(() => Promise.resolve(undefined));
 
     await wait();
