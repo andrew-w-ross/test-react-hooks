@@ -24,15 +24,15 @@ export type Suspended = typeof SUSPENDED;
  * Probably means that you'll need to wait for the suspension to complete.
  */
 export class AlreadySuspendedError extends Error {
-    constructor(applyArgs: any[]) {
+    constructor(applyArgs?: unknown[]) {
         super(AlreadySuspendedError.getErrorMessage(applyArgs));
     }
 
     /**
      *
-     * @param applyArgs Arguments sent to {@see Reflect.apply}
+     * @param applyArgs Arguments sent to {@link Reflect.apply}
      */
-    static getErrorMessage(applyArgs: any[]) {
+    static getErrorMessage(applyArgs?: unknown[]) {
         const fn = applyArgs?.[0];
         const fnName = typeof fn === "function" ? fn.name : null;
 

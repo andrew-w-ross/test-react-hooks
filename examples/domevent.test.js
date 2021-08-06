@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { useEffect } from "react";
 import { createTestProxy, act } from "test-react-hooks";
 import { createSandboxClickEvent } from "./util";

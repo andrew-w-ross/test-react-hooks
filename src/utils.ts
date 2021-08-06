@@ -1,5 +1,4 @@
 import { act } from "react-test-renderer";
-import assert from "assert";
 
 export function randomNumber() {
     return Date.now() + Math.floor(Math.random() * 100000);
@@ -43,8 +42,7 @@ export function promiseWithExternalExecutor<T = unknown>() {
         rejectFn = reject;
     });
 
-    assert(resolveFn, "Did not execute");
-    assert(rejectFn, "Did not execute");
+    
 
     return {
         promise,

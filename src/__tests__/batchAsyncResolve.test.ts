@@ -25,7 +25,7 @@ function useBatchAsync(ms = 1) {
 }
 
 const [prxBatchAsync, control] = createTestProxy(useBatchAsync);
-it("by default will wait for 2ms to pass before resoving", async () => {
+it("by default will wait for 2ms to pass before resolving", async () => {
     {
         const value = prxBatchAsync();
         expect(value).toEqual(0);

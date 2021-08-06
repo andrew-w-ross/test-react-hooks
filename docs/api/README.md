@@ -1,16 +1,16 @@
-test-react-hooks - v*
+test-react-hooks - v3.0.1
 
-# test-react-hooks - v*
+# test-react-hooks - v3.0.1
 
 ## Table of contents
 
 ### Classes
 
-- [AlreadyExecutedError](classes/alreadyexecutederror.md)
-- [AlreadySuspendedError](classes/alreadysuspendederror.md)
-- [CheckWrapperError](classes/checkwrappererror.md)
-- [UnknownError](classes/unknownerror.md)
-- [UpdateWaiter](classes/updatewaiter.md)
+- [AlreadyExecutedError](classes/AlreadyExecutedError.md)
+- [AlreadySuspendedError](classes/AlreadySuspendedError.md)
+- [CheckWrapperError](classes/CheckWrapperError.md)
+- [UnknownError](classes/UnknownError.md)
+- [UpdateWaiter](classes/UpdateWaiter.md)
 
 ### Type aliases
 
@@ -37,13 +37,13 @@ test-react-hooks - v*
 
 ### CreateTestProxyOptions
 
-Ƭ **CreateTestProxyOptions**: *Partial*<Omit<[*DefaultCreateTestProxyOptions*](README.md#defaultcreatetestproxyoptions), ``"waiterDefault"``\>\>
+Ƭ **CreateTestProxyOptions**: `Partial`<`Omit`<[`DefaultCreateTestProxyOptions`](README.md#defaultcreatetestproxyoptions), ``"waiterDefault"``\>\>
 
 ___
 
 ### DefaultCreateTestProxyOptions
 
-Ƭ **DefaultCreateTestProxyOptions**: *object*
+Ƭ **DefaultCreateTestProxyOptions**: `Object`
 
 Options for [createTestProxy](README.md#createtestproxy)
 
@@ -51,18 +51,18 @@ Options for [createTestProxy](README.md#createtestproxy)
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `actFn` | *typeof* [*act*](README.md#act) | The act function that react needs, use this if you need to use multiple react [multiple-renderers](https://reactjs.org/docs/testing-recipes.html#multiple-renderers) |
-| `autoInvokeSuspense` | *boolean* | When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed. If this is set to false {@link waitForNextUpdate} will not reject on error and instead the next invocation will throw. |
-| `strict` | *boolean* | Should the proxy throw an error or print a warning, defaults to true. |
-| `testRendererOptions?` | TestRendererOptions | Options that are forwarded to [react-test-renderer](https://reactjs.org/docs/test-renderer.html) |
-| `waiterDefault` | (`waiter`: [*UpdateWaiter*](classes/updatewaiter.md)) => *any* | If the updateWaiter has no waiters this function will default it. |
-| `wrapper` | [*WrapperComponent*](README.md#wrappercomponent) | Wrapper component for the hook callback, make sure children is rendered |
+| `actFn` | typeof [`act`](README.md#act) | The act function that react needs, use this if you need to use multiple react [multiple-renderers](https://reactjs.org/docs/testing-recipes.html#multiple-renderers) |
+| `autoInvokeSuspense` | `boolean` | When a proxied function that is not in the initial render call suspends it has to be invoked after the promise resolves to see if it ultimately failed. If this is set to false {@link waitForNextUpdate} will not reject on error and instead the next invocation will throw. |
+| `strict` | `boolean` | Should the proxy throw an error or print a warning, defaults to true. |
+| `testRendererOptions?` | `TestRendererOptions` | Options that are forwarded to [react-test-renderer](https://reactjs.org/docs/test-renderer.html) |
+| `wrapper` | [`WrapperComponent`](README.md#wrappercomponent) | Wrapper component for the hook callback, make sure children is rendered |
+| `waiterDefault` | (`waiter`: [`UpdateWaiter`](classes/UpdateWaiter.md)) => `any` | - |
 
 ___
 
 ### Suspended
 
-Ƭ **Suspended**: *typeof* [*SUSPENDED*](README.md#suspended)
+Ƭ **Suspended**: typeof [`SUSPENDED`](README.md#suspended)
 
 Type alias for the [SUSPENDED](README.md#suspended) symbol
 
@@ -70,33 +70,35 @@ ___
 
 ### TestHook
 
-Ƭ **TestHook**: (...`args`: *any*[]) => *any*
-
-Type definition for a hook
+Ƭ **TestHook**: (...`args`: `any`[]) => `any`
 
 #### Type declaration
 
-▸ (...`args`: *any*[]): *any*
+▸ (...`args`): `any`
 
-#### Parameters
+Type definition for a hook
+
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `...args` | *any*[] |
+| `...args` | `any`[] |
 
-**Returns:** *any*
+##### Returns
+
+`any`
 
 ___
 
 ### TestProxyControl
 
-Ƭ **TestProxyControl**: *ReturnType*<*typeof* [*createTestProxy*](README.md#createtestproxy)\>[``1``]
+Ƭ **TestProxyControl**: `ReturnType`<typeof [`createTestProxy`](README.md#createtestproxy)\>[``1``]
 
 ___
 
 ### UpdateEvent
 
-Ƭ **UpdateEvent**: { `async`: *boolean* ; `error?`: *undefined*  } \| { `async?`: *undefined* ; `error`: Error  }
+Ƭ **UpdateEvent**: { `async`: `boolean` ; `error?`: `undefined`  } \| { `async?`: `undefined` ; `error`: `Error`  }
 
 Update events while rendering
  If async is true then the update is happening in response to something other than a direct call to the hook.
@@ -106,7 +108,7 @@ ___
 
 ### WrapperComponent
 
-Ƭ **WrapperComponent**: *ComponentType*<{ `children`: ReactNode  }\>
+Ƭ **WrapperComponent**: `ComponentType`<`Object`\>
 
 Wrapper component to take in and render the children
 
@@ -114,13 +116,13 @@ Wrapper component to take in and render the children
 
 ### DEFAULT\_OPTIONS
 
-• `Const` **DEFAULT\_OPTIONS**: [*DefaultCreateTestProxyOptions*](README.md#defaultcreatetestproxyoptions)
+• `Const` **DEFAULT\_OPTIONS**: [`DefaultCreateTestProxyOptions`](README.md#defaultcreatetestproxyoptions)
 
 ___
 
 ### SUSPENDED
 
-• `Const` **SUSPENDED**: *typeof* [*SUSPENDED*](README.md#suspended)
+• `Const` **SUSPENDED**: typeof [`SUSPENDED`](README.md#suspended)
 
 Symbol that is returned if the call to that function is suspended.
 
@@ -128,7 +130,7 @@ Symbol that is returned if the call to that function is suspended.
 
 ### act
 
-▸ **act**(`callback`: () => *Promise*<VoidOrUndefinedOnly\>): *Promise*<undefined\>
+▸ **act**(`callback`): `Promise`<`undefined`\>
 
 Wrap any code rendering and triggering updates to your components into `act()` calls.
 
@@ -142,11 +144,13 @@ reduces the amount of re-renders done.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `callback` | () => *Promise*<VoidOrUndefinedOnly\> | An asynchronous, void callback that will execute as a single, complete React commit. |
+| `callback` | () => `Promise`<`VoidOrUndefinedOnly`\> | An asynchronous, void callback that will execute as a single, complete React commit. |
 
-**Returns:** *Promise*<undefined\>
+#### Returns
 
-▸ **act**(`callback`: () => VoidOrUndefinedOnly): DebugPromiseLike
+`Promise`<`undefined`\>
+
+▸ **act**(`callback`): `DebugPromiseLike`
 
 Wrap any code rendering and triggering updates to your components into `act()` calls.
 
@@ -160,23 +164,27 @@ reduces the amount of re-renders done.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `callback` | () => VoidOrUndefinedOnly | A synchronous, void callback that will execute as a single, complete React commit. |
+| `callback` | () => `VoidOrUndefinedOnly` | A synchronous, void callback that will execute as a single, complete React commit. |
 
-**Returns:** DebugPromiseLike
+#### Returns
+
+`DebugPromiseLike`
 
 ___
 
 ### cleanUp
 
-▸ **cleanUp**(): *void*
+▸ **cleanUp**(): `void`
 
-**Returns:** *void*
+#### Returns
+
+`void`
 
 ___
 
 ### createTestProxy
 
-▸ **createTestProxy**<THook\>(`hook`: THook, `options?`: [*CreateTestProxyOptions*](README.md#createtestproxyoptions)): readonly [THook, { `unmount`: () => *void* ; `waitForNextUpdate`: () => [*UpdateWaiter*](classes/updatewaiter.md) ; `wrapper`:   }]
+▸ **createTestProxy**<`THook`\>(`hook`, `options?`): readonly [`THook`, { `unmount`: () => `void` ; `waitForNextUpdate`: () => [`UpdateWaiter`](classes/UpdateWaiter.md) ; `wrapper`:   }]
 
 Main function for `test-react-hooks`
 Creates a proxy hook and a control object for that hook
@@ -188,15 +196,17 @@ Proxy hook will rerender when called and wrap calls in act when appropriate
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `THook` | [*TestHook*](README.md#testhook) | type of the hook to proxy, should be inferred from hook argument |
+| `THook` | extends [`TestHook`](README.md#testhook) | type of the hook to proxy, should be inferred from hook argument |
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `hook` | THook | to proxy |
-| `options?` | [*CreateTestProxyOptions*](README.md#createtestproxyoptions) | - |
+| `hook` | `THook` | to proxy |
+| `options` | [`CreateTestProxyOptions`](README.md#createtestproxyoptions) | - |
 
-**Returns:** readonly [THook, { `unmount`: () => *void* ; `waitForNextUpdate`: () => [*UpdateWaiter*](classes/updatewaiter.md) ; `wrapper`:   }]
+#### Returns
+
+readonly [`THook`, { `unmount`: () => `void` ; `waitForNextUpdate`: () => [`UpdateWaiter`](classes/UpdateWaiter.md) ; `wrapper`:   }]
 
 tuple where the first result is the proxied hook and the second is the control object.
