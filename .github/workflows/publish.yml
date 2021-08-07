@@ -1,7 +1,6 @@
 name: Publish
 on:
-  release:
-    types: [created]      
+  workflow_dispatch:
 env:
   VERSION: ${{ github.event.release.tag_name }}
 jobs:
@@ -24,20 +23,7 @@ jobs:
 
       - name: publish                
         run: |
-          echo $VERSION
-          VERSION="${VERSION//v}"
-          yarn version -i $VERSION
+          echo $VERSION                
           npm publish --access public          
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Documentation
-        run: yarn docs
-
-      - name: push package.json
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          file_pattern: package.json
-          commit_message: Published ${{env.VERSION}}
-          # https://github.community/t/how-to-push-to-protected-branches-in-a-github-action/16101/46
-          branch: release/v${{env.VERSION}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}            

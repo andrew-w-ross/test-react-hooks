@@ -1,4 +1,4 @@
-[test-react-hooks - v3.0.1](../README.md) / CheckWrapperError
+[test-react-hooks - v3.0.4](../README.md) / CheckWrapperError
 
 # Class: CheckWrapperError
 

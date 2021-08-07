@@ -1,6 +1,6 @@
-test-react-hooks - v3.0.1
+test-react-hooks - v3.0.4
 
-# test-react-hooks - v3.0.1
+# test-react-hooks - v3.0.4
 
 ## Table of contents
 
