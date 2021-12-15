@@ -11,8 +11,19 @@
         "eslint-config-prettier": "^8.3.0",
         "eslint-plugin-react": "^7.27.1",
         "eslint-plugin-react-hooks": "^4.3.0",
+        "jest": "^27.4.5",
         "prettier": "^2.5.1",
         "prettier-eslint": "^13.0.0",
         "typescript": "^4.5.4"
+    },
+    "scripts": {
+        "test": "yarn jest",
+        "lint": "eslint packages/*/src/**/*.{ts,tsx}",
+        "fix": "yarn lint --fix"
+    },
+    "jest": {
+        "projects": [
+            "<rootDir>/packages/*"
+        ]
     }
 }

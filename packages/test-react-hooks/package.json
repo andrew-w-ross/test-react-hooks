@@ -32,15 +32,10 @@
         "use-async-resource": "^2.2.2"
     },
     "scripts": {
-        "test": "jest",
-        "fix": "eslint src/**/*.{ts,tsx} --fix",
-        "lint": "eslint src/**/*.{ts,tsx}",
-        "check": "yarn lint && yarn tsc",
         "clean": "rm -rf dist",
-        "typecheck:watch": "yarn tsc --watch --noEmit",
         "build:tsc": "tsc -p tsconfig.build.json",
         "build": "yarn clean && yarn build:tsc",
-        "prepublishOnly": "yarn run check && yarn build",
+        "prepublishOnly": "yarn build",
         "docs": "typedoc"
     },
     "jest": {
@@ -65,6 +60,5 @@
     ],
     "dependencies": {
         "rxjs": "^7.4.0"
-    },
-    "packageManager": "yarn@3.1.1"
+    }
 }

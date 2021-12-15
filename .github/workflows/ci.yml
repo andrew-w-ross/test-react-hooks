@@ -24,28 +24,16 @@ jobs:
 
       - name: Set Version
         run: |
-          yarn add react@${{ matrix.version }} -D
-          yarn add react-test-renderer@${{ matrix.version }} -D
+          yarn workspace test-react-hooks add react@${{ matrix.version }} -D
+          yarn workspace test-react-hooks add react-test-renderer@${{ matrix.version }} -D
         if: ${{ matrix.version != 'latest'}} 
       
       - name: build
-        run: yarn build
+        run: yarn workspace test-react-hooks build
 
       - name: lint
         run: yarn lint
 
       - name: test
-        run: yarn test          
-
-      - name: Link Package
-        working-directory: ./examples
-        run: |
-          yarn link ../
-          yarn
-        if: ${{ matrix.version == 'latest' }}
-
-      - name: Test examples
-        working-directory: ./examples
-        run: yarn jest
-        if: ${{ matrix.version == 'latest' }}
+        run: yarn test
           

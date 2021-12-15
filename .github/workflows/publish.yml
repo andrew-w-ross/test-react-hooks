@@ -24,6 +24,6 @@ jobs:
       - name: publish                
         run: |
           echo $VERSION                
-          npm publish --access public          
+          yarn workspace test-react-hooks npm publish --access public          
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}            
