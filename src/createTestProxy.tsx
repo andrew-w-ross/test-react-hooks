@@ -21,10 +21,8 @@ export function cleanUp() {
     cleanUpFns.splice(0, cleanUpFns.length).forEach((func) => func());
 }
 
-
-
-if (!globalThis?.process?.env?.TEST_REACT_HOOKS_NO_CLEANUP) {    
-    if (typeof globalThis?.afterEach === "function") {        
+if (!globalThis?.process?.env?.TEST_REACT_HOOKS_NO_CLEANUP) {
+    if (typeof globalThis?.afterEach === "function") {
         globalThis?.afterEach?.(cleanUp);
     } else {
         console.warn(
@@ -119,16 +117,11 @@ export function createTestProxy<THook extends TestHook>(
     //If you destructor the args the naming gets odd in documentation
     options: CreateTestProxyOptions = {},
 ) {
-    const {
-        testRendererOptions,
-        strict,
-        autoInvokeSuspense,
-        actFn,
-        wrapper,
-    } = {
-        ...DEFAULT_OPTIONS,
-        ...options,
-    };
+    const { testRendererOptions, strict, autoInvokeSuspense, actFn, wrapper } =
+        {
+            ...DEFAULT_OPTIONS,
+            ...options,
+        };
 
     let Wrapper = wrapper;
 

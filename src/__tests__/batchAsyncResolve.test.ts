@@ -75,7 +75,7 @@ it("can wait for single event", async () => {
     }
 });
 
-it(`regardless of the throttleTime it'll still wait for the first change`, async () => {
+it(`regardless of the throttleTime it'll still wait for at least the first change`, async () => {
     {
         const value = prxBatchAsync(10);
         expect(value).toBe(0);
@@ -85,7 +85,7 @@ it(`regardless of the throttleTime it'll still wait for the first change`, async
 
     {
         const value = prxBatchAsync(10);
-        expect(value).toBe(1);
+        expect(value).toBeGreaterThanOrEqual(1);
     }
 });
 

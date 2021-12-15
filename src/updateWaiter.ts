@@ -124,8 +124,8 @@ export class UpdateWaiter extends Promise<void> {
 export function createUpdateStream() {
     const subject = new Subject<UpdateEvent>();
 
-    function captureErrors() {
-        let caughtError: null | Error = null;
+    function hoistError<TResult>(fn: () => TResult) {
+        let caughtError: unknown = null;
         const subscription = subject
             .pipe(
                 filter((update) => update.error != null),
@@ -133,30 +133,22 @@ export function createUpdateStream() {
             )
             .subscribe({
                 next(err) {
-                    caughtError = err.error!;
+                    caughtError = err.error;
                 },
             });
 
-        return () => {
-            subscription.unsubscribe();
-            if (caughtError) {
-                throw caughtError;
-            }
-        };
-    }
-
-    function hoistError<TResult>(fn: () => TResult) {
-        const complete = captureErrors();
         const result = fn();
-        complete();
+        subscription.unsubscribe();
+        if (caughtError) {
+            throw caughtError;
+        }
+
         return result;
     }
 
     function createWaiter() {
-        const {
-            executor,
-            promise: deferredPromise,
-        } = promiseWithExternalExecutor<void>();
+        const { executor, promise: deferredPromise } =
+            promiseWithExternalExecutor<void>();
 
         const update$ = connectable(subject, {
             connector: () => new ReplaySubject<UpdateEvent>(),

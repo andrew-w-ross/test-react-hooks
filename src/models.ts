@@ -7,7 +7,7 @@ import type { ComponentType } from "react";
  */
 export type UpdateEvent =
     | { async: boolean; error?: undefined }
-    | { error: Error; async?: undefined };
+    | { error: unknown; async?: undefined };
 
 /**
  * Symbol that is returned if the call to that function is suspended.
