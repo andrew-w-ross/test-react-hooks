@@ -1,78 +1,18 @@
 {
-    "name": "test-react-hooks",
-    "version": "3.0.4",
-    "description": "Testing for react hooks",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist"
+    "private": true,
+    "name": "root",
+    "workspaces": [
+        "packages/*"
     ],
-    "repository": "git@github.com:andrew-w-ross/test-react-hooks.git",
-    "author": "Andrew Ross <rossirsa@gmail.com>",
-    "license": "MIT",
-    "engines": {
-        "node": ">= 12"
-    },
-    "peerDependencies": {
-        "react": ">= 16.14.0",
-        "react-test-renderer": ">= 16.14.0"
-    },
     "devDependencies": {
-        "@types/jest": "^27.0.3",
-        "@types/node": "^16.11.13",
-        "@types/react": "^17.0.37",
-        "@types/react-test-renderer": "^17.0.1",
         "@typescript-eslint/eslint-plugin": "^5.7.0",
         "@typescript-eslint/parser": "^5.7.0",
         "eslint": "^8.4.1",
         "eslint-config-prettier": "^8.3.0",
         "eslint-plugin-react": "^7.27.1",
         "eslint-plugin-react-hooks": "^4.3.0",
-        "jest": "^27.4.5",
         "prettier": "^2.5.1",
         "prettier-eslint": "^13.0.0",
-        "react": "^17.0.2",
-        "react-test-renderer": "^17.0.2",
-        "ts-jest": "^27.1.1",
-        "typedoc": "^0.22.10",
-        "typedoc-plugin-markdown": "^3.11.7",
-        "typescript": "^4.5.4",
-        "use-async-resource": "^2.2.2"
-    },
-    "scripts": {
-        "test": "jest",
-        "fix": "eslint src/**/*.{ts,tsx} --fix",
-        "lint": "eslint src/**/*.{ts,tsx}",
-        "check": "yarn lint && yarn tsc",
-        "clean": "rm -rf dist",
-        "typecheck:watch": "yarn tsc --watch --noEmit",
-        "build:tsc": "tsc -p tsconfig.build.json",
-        "build": "yarn clean && yarn build:tsc",
-        "prepublishOnly": "yarn run check && yarn build",
-        "docs": "typedoc"
-    },
-    "jest": {
-        "setupFilesAfterEnv": [
-            "<rootDir>/src/jest.setup.ts"
-        ],
-        "clearMocks": true,
-        "preset": "ts-jest",
-        "roots": [
-            "<rootDir>/src/"
-        ],
-        "testEnvironment": "node",
-        "testTimeout": 100
-    },
-    "keywords": [
-        "testing",
-        "react",
-        "hooks",
-        "react-native",
-        "unit",
-        "react-hooks"
-    ],
-    "dependencies": {
-        "rxjs": "^7.4.0"
-    },
-    "packageManager": "yarn@3.1.1"
+        "typescript": "^4.5.4"
+    }
 }
