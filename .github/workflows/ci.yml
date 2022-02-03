@@ -24,8 +24,8 @@ jobs:
 
       - name: Set Version
         run: |
-          yarn workspace examples add react@${{ matrix.version }} -D
-          yarn workspace examples add react-test-renderer@${{ matrix.version }} -D
+          yarn workspace examples add react@${{ matrix.version }}
+          yarn workspace examples add react-test-renderer@${{ matrix.version }}
           yarn workspace test-react-hooks add react@${{ matrix.version }} -D
           yarn workspace test-react-hooks add react-test-renderer@${{ matrix.version }} -D
         if: ${{ matrix.version != 'latest'}} 
