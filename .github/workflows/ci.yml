@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["14", "16", "18"]
+        node: ["14", "16", "current"]
         version: ["latest", "16.14"]        
     name: Test Node V${{ matrix.node }} react@${{ matrix.version }}
     steps:
